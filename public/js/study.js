@@ -9,6 +9,7 @@ let typingAnswered = false;
 let cardResults = []; // {cardId, correct}
 let markedCards = new Set(); // tracks indices already marked to prevent double-counting
 let dotResults = {}; // index -> true/false, for coloring dots after answer
+let autoAdvanceTimer = null;
 
 function setMode(mode) {
   studyMode = mode;
@@ -85,7 +86,9 @@ function showTypingCard(index) {
 
 function checkTypedAnswer() {
   if (typingAnswered) {
-    // Already answered — advance
+    // Already answered — advance manually, cancel auto-advance
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
     showCard(current + 1);
     if (studyMode === 'type') {
       setTimeout(() => document.getElementById('typeAnswer')?.focus(), 50);
@@ -129,7 +132,8 @@ function checkTypedAnswer() {
   document.getElementById('nextBtn').disabled = false;
 
   // Auto-advance after 1.5s
-  setTimeout(() => {
+  autoAdvanceTimer = setTimeout(() => {
+    autoAdvanceTimer = null;
     showCard(current + 1);
     if (studyMode === 'type') {
       setTimeout(() => document.getElementById('typeAnswer')?.focus(), 50);
@@ -165,16 +169,15 @@ function shakeInput() {
 }
 
 function markAnswer(isCorrect) {
-  if (!markedCards.has(current)) {
-    markedCards.add(current);
-    dotResults[current] = isCorrect;
-    const card = cards[current];
-    if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
-    if (isCorrect) correct++; else wrong++;
-    document.getElementById('correctCount').textContent = correct;
-    document.getElementById('wrongCount').textContent = wrong;
-    updateDots(current);
-  }
+  if (markedCards.has(current)) return;
+  markedCards.add(current);
+  dotResults[current] = isCorrect;
+  const card = cards[current];
+  if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
+  if (isCorrect) correct++; else wrong++;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  updateDots(current);
   flashFeedback(isCorrect);
   setTimeout(() => showCard(current + 1), 350);
 }
@@ -286,6 +289,7 @@ async function showComplete() {
 
 function restartStudy() {
   correct = 0; wrong = 0; startTime = Date.now(); cardResults = []; markedCards = new Set(); dotResults = {};
+  clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null;
   document.getElementById('correctCount').textContent = 0;
   document.getElementById('wrongCount').textContent = 0;
   document.getElementById('studyArea').style.display = 'flex';

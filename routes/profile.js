@@ -8,9 +8,10 @@ const router = express.Router();
 router.post('/avatar', requireAuth, async (req, res) => {
   const { color } = req.body;
   const validColors = AVATAR_COLORS.map(c => c.hex);
-  if (validColors.includes(color)) {
-    await db.users.updateAsync({ _id: req.session.userId }, { $set: { avatarColor: color } });
+  if (!validColors.includes(color)) {
+    return res.redirect('/profile');
   }
+  await db.users.updateAsync({ _id: req.session.userId }, { $set: { avatarColor: color } });
   res.redirect('/profile');
 });
 

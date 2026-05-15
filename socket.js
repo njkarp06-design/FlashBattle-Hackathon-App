@@ -71,6 +71,8 @@ function initSocket(io) {
           questionTimer: null,
           status: 'waiting',
           answeredThisRound: new Set(),
+          advancing: false,
+          createdAt: Date.now(),
         });
       }
 
@@ -104,59 +106,70 @@ function initSocket(io) {
     });
 
     socket.on('start-game', async ({ code, userId }) => {
-      const sessionUserId = socket.request.session?.userId;
-      if (!sessionUserId || sessionUserId !== userId) return;
-      const roomState = activeRooms.get(code);
-      if (!roomState || roomState.hostId !== userId) return;
-      if (roomState.players.size < 1) {
-        socket.emit('error', { message: 'Need at least 1 player to start.' });
-        return;
+      try {
+        const sessionUserId = socket.request.session?.userId;
+        if (!sessionUserId || sessionUserId !== userId) return;
+        const roomState = activeRooms.get(code);
+        if (!roomState || roomState.hostId !== userId) return;
+        if (roomState.players.size < 1) {
+          socket.emit('error', { message: 'Need at least 1 player to start.' });
+          return;
+        }
+
+        const questions = await buildQuestions(roomState.deckId);
+        if (!questions) {
+          socket.emit('error', { message: 'Not enough cards in this deck (need at least 4).' });
+          return;
+        }
+
+        roomState.questions = questions;
+        roomState.currentQ = 0;
+        roomState.status = 'playing';
+        roomState.answeredThisRound = new Set();
+        roomState.advancing = false;
+
+        await db.battleRooms.updateAsync({ code }, { $set: { status: 'playing' } });
+
+        io.to(code).emit('game-start', { totalQuestions: questions.length });
+        await sendQuestion(io, code, roomState);
+      } catch (err) {
+        console.error('start-game error:', err);
+        socket.emit('error', { message: 'Failed to start game. Please try again.' });
       }
-
-      const questions = await buildQuestions(roomState.deckId);
-      if (!questions) {
-        socket.emit('error', { message: 'Not enough cards in this deck (need at least 4).' });
-        return;
-      }
-
-      roomState.questions = questions;
-      roomState.currentQ = 0;
-      roomState.status = 'playing';
-      roomState.answeredThisRound = new Set();
-
-      await db.battleRooms.updateAsync({ code }, { $set: { status: 'playing' } });
-
-      io.to(code).emit('game-start', { totalQuestions: questions.length });
-      await sendQuestion(io, code, roomState);
     });
 
     socket.on('submit-answer', async ({ code, userId, answer, timeLeft }) => {
-      const roomState = activeRooms.get(code);
-      if (!roomState || roomState.status !== 'playing') return;
-      if (roomState.answeredThisRound.has(userId)) return;
+      try {
+        const roomState = activeRooms.get(code);
+        if (!roomState || roomState.status !== 'playing') return;
+        if (roomState.answeredThisRound.has(userId)) return;
 
-      roomState.answeredThisRound.add(userId);
+        roomState.answeredThisRound.add(userId);
 
-      const q = roomState.questions[roomState.currentQ];
-      const isCorrect = answer === q.correctAnswer;
-      const points = isCorrect ? Math.round(100 + (timeLeft || 0) * 6) : 0;
+        const q = roomState.questions[roomState.currentQ];
+        const isCorrect = answer === q.correctAnswer;
+        const safeTimeLeft = Math.min(Math.max(parseInt(timeLeft) || 0, 0), 15);
+        const points = isCorrect ? Math.round(100 + safeTimeLeft * 6) : 0;
 
-      const player = roomState.players.get(userId);
-      if (player) {
-        player.score += points;
-        player.answers.push({ correct: isCorrect, points });
-      }
+        const player = roomState.players.get(userId);
+        if (player) {
+          player.score += points;
+          player.answers.push({ correct: isCorrect, points });
+        }
 
-      socket.emit('answer-result', {
-        correct: isCorrect,
-        correctAnswer: q.correctAnswer,
-        points,
-        totalScore: player ? player.score : 0,
-      });
+        socket.emit('answer-result', {
+          correct: isCorrect,
+          correctAnswer: q.correctAnswer,
+          points,
+          totalScore: player ? player.score : 0,
+        });
 
-      if (roomState.answeredThisRound.size >= roomState.players.size) {
-        if (roomState.questionTimer) clearTimeout(roomState.questionTimer);
-        await advanceQuestion(io, code, roomState);
+        if (roomState.answeredThisRound.size >= roomState.players.size) {
+          if (roomState.questionTimer) clearTimeout(roomState.questionTimer);
+          await advanceQuestion(io, code, roomState);
+        }
+      } catch (err) {
+        console.error('submit-answer error:', err);
       }
     });
 
@@ -168,6 +181,7 @@ function initSocket(io) {
       roomState.players.delete(currentUser.userId);
 
       if (roomState.players.size === 0) {
+        if (roomState.questionTimer) clearTimeout(roomState.questionTimer);
         activeRooms.delete(currentRoom);
         return;
       }
@@ -197,6 +211,16 @@ function initSocket(io) {
       }
     });
   });
+
+  // Purge rooms that have been waiting for over 30 minutes with no activity
+  setInterval(() => {
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    for (const [code, room] of activeRooms) {
+      if (room.status === 'waiting' && room.createdAt < cutoff) {
+        activeRooms.delete(code);
+      }
+    }
+  }, 10 * 60 * 1000);
 }
 
 async function sendQuestion(io, code, roomState) {
@@ -204,6 +228,7 @@ async function sendQuestion(io, code, roomState) {
   const TIME_PER_QUESTION = 15;
 
   roomState.answeredThisRound = new Set();
+  roomState.advancing = false;
 
   io.to(code).emit('question', {
     index: roomState.currentQ,
@@ -220,6 +245,9 @@ async function sendQuestion(io, code, roomState) {
 }
 
 async function advanceQuestion(io, code, roomState) {
+  if (roomState.advancing) return;
+  roomState.advancing = true;
+
   await new Promise(r => setTimeout(r, 2500));
 
   roomState.currentQ++;
@@ -227,6 +255,7 @@ async function advanceQuestion(io, code, roomState) {
   if (roomState.currentQ >= roomState.questions.length) {
     await endGame(io, code, roomState);
   } else {
+    roomState.advancing = false;
     const leaderboard = getLeaderboard(roomState);
     io.to(code).emit('leaderboard-update', { leaderboard });
     await new Promise(r => setTimeout(r, 1500));
@@ -245,13 +274,10 @@ async function endGame(io, code, roomState) {
   const winnerId = leaderboard[0]?.userId;
   for (const [userId, player] of roomState.players) {
     const xpEarned = Math.round(player.score * 0.1) + (userId === winnerId ? 100 : 25);
-    const user = await db.users.findOneAsync({ _id: userId });
-    if (user) {
-      const newXp = user.xp + xpEarned;
-      await db.users.updateAsync(
-        { _id: userId },
-        { $set: { xp: newXp, level: calcLevel(newXp) } }
-      );
+    await db.users.updateAsync({ _id: userId }, { $inc: { xp: xpEarned } });
+    const updated = await db.users.findOneAsync({ _id: userId });
+    if (updated) {
+      await db.users.updateAsync({ _id: userId }, { $set: { level: calcLevel(updated.xp) } });
     }
   }
 

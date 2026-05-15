@@ -15,12 +15,12 @@ const db = {
   cardProgress: new Datastore({ filename: path.join(dbDir, 'card-progress.db'), autoload: true }),
 };
 
-db.users.ensureIndexAsync({ fieldName: 'username', unique: true }).catch(() => {});
+db.users.ensureIndexAsync({ fieldName: 'username', unique: true }).catch(err => console.error('DB index error (users.username):', err));
 db.users.removeIndexAsync('email').catch(() => {});
-db.decks.ensureIndexAsync({ fieldName: 'userId' }).catch(() => {});
-db.cards.ensureIndexAsync({ fieldName: 'deckId' }).catch(() => {});
-db.battleRooms.ensureIndexAsync({ fieldName: 'code', unique: true }).catch(() => {});
-db.cardProgress.ensureIndexAsync({ fieldName: 'userId' }).catch(() => {});
+db.decks.ensureIndexAsync({ fieldName: 'userId' }).catch(err => console.error('DB index error (decks.userId):', err));
+db.cards.ensureIndexAsync({ fieldName: 'deckId' }).catch(err => console.error('DB index error (cards.deckId):', err));
+db.battleRooms.ensureIndexAsync({ fieldName: 'code', unique: true }).catch(err => console.error('DB index error (battleRooms.code):', err));
+db.cardProgress.ensureIndexAsync({ fieldName: 'userId' }).catch(err => console.error('DB index error (cardProgress.userId):', err));
 
 function calcLevel(xp) {
   return Math.floor(xp / 200) + 1;

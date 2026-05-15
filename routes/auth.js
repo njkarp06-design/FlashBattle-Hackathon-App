@@ -1,15 +1,24 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const { db, calcLevel } = require('../database/db');
 const { redirectIfAuth } = require('../middleware/auth');
 const { AVATAR_COLORS } = require('../utils/constants');
 const router = express.Router();
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many attempts, please try again in 15 minutes.',
+});
+
 router.get('/login', redirectIfAuth, (req, res) => {
   res.render('auth/login', { error: null, next: req.query.next || '/dashboard' });
 });
 
-router.post('/login', redirectIfAuth, async (req, res) => {
+router.post('/login', authLimiter, redirectIfAuth, async (req, res) => {
   const { username, password, next } = req.body;
   if (!username || !password) {
     return res.render('auth/login', { error: 'Please fill in all fields.', next: next || '/dashboard' });
@@ -33,7 +42,7 @@ router.get('/register', redirectIfAuth, (req, res) => {
   res.render('auth/register', { error: null, avatarColors: AVATAR_COLORS });
 });
 
-router.post('/register', redirectIfAuth, async (req, res) => {
+router.post('/register', authLimiter, redirectIfAuth, async (req, res) => {
   const { username, password, confirmPassword } = req.body;
 
   if (!username || !password || !confirmPassword) {

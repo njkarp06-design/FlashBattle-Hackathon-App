@@ -27,11 +27,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+if (!process.env.SESSION_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET environment variable is required in production');
+  }
+  console.warn('WARNING: SESSION_SECRET not set — using insecure fallback for local dev only');
+}
+
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'flashbattle-secret',
+  secret: process.env.SESSION_SECRET || 'flashbattle-dev-only-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  },
 });
 
 app.use(sessionMiddleware);
@@ -197,7 +209,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error(`[${req.method}] ${req.path} —`, err);
   const user = res.locals.sessionUser;
   res.status(500).render('error', { user, code: 500, message: 'Something went wrong' });
 });

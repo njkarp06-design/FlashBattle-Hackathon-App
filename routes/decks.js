@@ -155,9 +155,10 @@ router.post('/:id/study/complete', requireAuth, async (req, res) => {
   if (!deck) return res.json({ error: 'Not found' });
 
   const { cardsStudied, cardsCorrect, durationSeconds, cardResults } = req.body;
-  const studiedNum = parseInt(cardsStudied) || 0;
-  const correctNum = parseInt(cardsCorrect) || 0;
-  const durationNum = parseInt(durationSeconds) || 0;
+  const deckCardCount = await db.cards.countAsync({ deckId: deck._id });
+  const studiedNum = Math.min(Math.max(parseInt(cardsStudied) || 0, 0), deckCardCount);
+  const correctNum = Math.min(Math.max(parseInt(cardsCorrect) || 0, 0), studiedNum);
+  const durationNum = Math.min(Math.max(parseInt(durationSeconds) || 0, 0), 7200);
 
   // Daily challenge bonus XP
   const today = new Date().toISOString().split('T')[0];

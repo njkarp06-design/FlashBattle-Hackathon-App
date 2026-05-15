@@ -7,6 +7,7 @@ let startTime = Date.now();
 let studyMode = 'flip'; // 'flip' or 'type'
 let typingAnswered = false;
 let cardResults = []; // {cardId, correct}
+let markedCards = new Set(); // tracks indices already marked to prevent double-counting
 
 function setMode(mode) {
   studyMode = mode;
@@ -139,11 +140,14 @@ function flipCard() {
 }
 
 function markAnswer(isCorrect) {
-  const card = cards[current];
-  if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
-  if (isCorrect) correct++; else wrong++;
-  document.getElementById('correctCount').textContent = correct;
-  document.getElementById('wrongCount').textContent = wrong;
+  if (!markedCards.has(current)) {
+    markedCards.add(current);
+    const card = cards[current];
+    if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
+    if (isCorrect) correct++; else wrong++;
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('wrongCount').textContent = wrong;
+  }
   showCard(current + 1);
 }
 
@@ -232,7 +236,7 @@ async function showComplete() {
 }
 
 function restartStudy() {
-  correct = 0; wrong = 0; startTime = Date.now(); cardResults = [];
+  correct = 0; wrong = 0; startTime = Date.now(); cardResults = []; markedCards = new Set();
   document.getElementById('correctCount').textContent = 0;
   document.getElementById('wrongCount').textContent = 0;
   document.getElementById('studyArea').style.display = 'flex';

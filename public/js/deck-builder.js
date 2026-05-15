@@ -71,7 +71,7 @@ async function deleteCard(deckId, cardId) {
       }
     }
   } catch (err) {
-    alert('Failed to delete card.');
+    showToast('Failed to delete card.', 'error');
   }
 }
 

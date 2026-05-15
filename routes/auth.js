@@ -21,7 +21,8 @@ router.post('/login', redirectIfAuth, async (req, res) => {
     }
     req.session.userId = user._id;
     req.session.username = user.username;
-    res.redirect(next || '/dashboard');
+    const safePath = (next && next.startsWith('/') && !next.startsWith('//')) ? next : '/dashboard';
+    res.redirect(safePath);
   } catch (err) {
     console.error(err);
     res.render('auth/login', { error: 'Something went wrong. Try again.', next: next || '/dashboard' });
@@ -40,6 +41,12 @@ router.post('/register', redirectIfAuth, async (req, res) => {
   }
   if (username.trim().length < 2) {
     return res.render('auth/register', { error: 'Username must be at least 2 characters.', avatarColors: AVATAR_COLORS });
+  }
+  if (username.trim().length > 30) {
+    return res.render('auth/register', { error: 'Username must be 30 characters or fewer.', avatarColors: AVATAR_COLORS });
+  }
+  if (password.length < 6) {
+    return res.render('auth/register', { error: 'Password must be at least 6 characters.', avatarColors: AVATAR_COLORS });
   }
   if (password !== confirmPassword) {
     return res.render('auth/register', { error: 'Passwords do not match.', avatarColors: AVATAR_COLORS });

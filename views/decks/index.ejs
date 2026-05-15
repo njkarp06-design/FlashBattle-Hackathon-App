@@ -1,0 +1,59 @@
+<%- include('../partials/head', { pageTitle: 'My Decks' }) %>
+<%- include('../partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>My Decks</h1>
+        <p class="text-muted"><%= decks.length %> deck<%= decks.length !== 1 ? 's' : '' %> · <a href="/library" class="link-subtle">Browse public library →</a></p>
+      </div>
+      <a href="/decks/new" class="btn btn-primary">+ New Deck</a>
+    </div>
+
+    <% if (decks.length === 0) { %>
+    <div class="empty-state empty-state-lg">
+      <div class="empty-icon">🃏</div>
+      <h2>Create your first deck</h2>
+      <p>Organise any topic into flashcards. Study them solo or challenge others in a live battle.</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+        <a href="/decks/new" class="btn btn-primary btn-lg">Create a Deck</a>
+        <a href="/library" class="btn btn-ghost btn-lg">Browse Library</a>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="decks-grid">
+      <% decks.forEach(deck => { %>
+      <div class="deck-card">
+        <div class="deck-card-top">
+          <span class="deck-category-badge deck-cat-<%= catSlug(deck.category) %>">
+            <%= categoryIcons[deck.category] || '📚' %> <%= deck.category %>
+          </span>
+          <% if (deck.isPublic) { %><span class="badge-public">Public</span><% } %>
+        </div>
+        <h3 class="deck-card-title"><%= deck.title %></h3>
+        <p class="deck-card-desc"><%= deck.description || 'No description' %></p>
+        <div class="deck-card-meta">
+          <span><%= deck.cardCount %> cards</span>
+          <span><%= deck.playCount %> plays</span>
+          <% const m = masteryMap[deck._id]; const masteryPct = m && deck.cardCount > 0 ? Math.min(100, Math.round((m.masteredCardIds.length / deck.cardCount) * 100)) : 0; %>
+          <% if (masteryPct > 0) { %><span style="color:var(--success)"><%=masteryPct%>% mastered</span><% } %>
+        </div>
+        <% if (masteryPct > 0) { %>
+        <div class="deck-mastery-track">
+          <div class="deck-mastery-fill" style="width:<%=masteryPct%>%"></div>
+        </div>
+        <% } %>
+        <div class="deck-card-actions">
+          <a href="/decks/<%= deck._id %>/study" class="btn btn-primary btn-sm">Study</a>
+          <a href="/battle?deck=<%= deck._id %>" class="btn btn-ghost btn-sm">⚔️ Battle</a>
+          <a href="/decks/<%= deck._id %>/edit" class="btn btn-ghost btn-sm">Edit</a>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

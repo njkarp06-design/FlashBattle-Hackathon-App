@@ -1,0 +1,109 @@
+<%- include('../partials/head', { pageTitle: 'Battle Room: ' + room.code }) %>
+<%- include('../partials/nav') %>
+
+<main class="battle-room-main" id="battleMain">
+
+  <div id="waitingScreen" class="battle-screen">
+    <div class="battle-room-header">
+      <div class="room-code-display">
+        <span class="room-code-label">Room Code</span>
+        <span class="room-code" id="displayCode"><%= room.code %></span>
+        <button class="btn-copy" onclick="copyCode('<%= room.code %>')" title="Copy code">📋 Copy</button>
+      </div>
+      <div class="room-deck-info">
+        <span class="text-muted">Deck:</span>
+        <strong><%= deck.title %></strong>
+        <span class="text-muted"><%= cardCount %> cards · up to 10 questions</span>
+      </div>
+    </div>
+
+    <div class="waiting-area">
+      <h2>Waiting for players...</h2>
+      <p class="text-muted">Share the code <strong><%= room.code %></strong> — up to 8 players can join</p>
+
+      <div class="players-grid" id="playersList">
+        <div class="player-slot loading">
+          <div class="player-avatar" style="background: <%= user.avatarColor %>">
+            <%= user.username.charAt(0).toUpperCase() %>
+          </div>
+          <span class="player-name"><%= user.username %></span>
+          <% if (isHost) { %><span class="player-host-badge">Host</span><% } %>
+        </div>
+      </div>
+
+      <% if (isHost) { %>
+      <button class="btn btn-primary btn-lg" id="startBtn" onclick="startGame()" disabled>
+        Start Battle (need 1+ player)
+      </button>
+      <p class="text-muted small">You can start with just yourself for practice</p>
+      <% } else { %>
+      <div class="waiting-msg">
+        <div class="pulse-dot"></div>
+        Waiting for the host to start the battle...
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="battle-screen" style="display:none">
+    <div class="battle-top-bar">
+      <div class="battle-question-counter" id="questionCounter">Question 1 of 10</div>
+      <div class="battle-timer-wrap">
+        <div class="battle-timer" id="battleTimer">15</div>
+        <div class="battle-timer-ring">
+          <svg viewBox="0 0 36 36" class="timer-svg">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" stroke-width="3"
+              stroke-dasharray="94.2" stroke-dashoffset="0" id="timerCircle" stroke-linecap="round"
+              transform="rotate(-90 18 18)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="battle-score-display">Score: <span id="myScore">0</span></div>
+    </div>
+
+    <div class="battle-question-area">
+      <p class="battle-question-label">What is the answer?</p>
+      <h2 class="battle-question-text" id="questionText"></h2>
+    </div>
+
+    <div class="battle-options" id="optionsGrid"></div>
+
+    <div class="battle-answer-result" id="answerResult" style="display:none">
+      <div class="result-content">
+        <div class="result-icon" id="resultIcon"></div>
+        <p id="resultText"></p>
+        <p class="result-pts" id="resultPts"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaderboardScreen" class="battle-screen" style="display:none">
+    <div class="mid-round-board">
+      <h3>Round Results</h3>
+      <div class="leaderboard-list" id="midLeaderboard"></div>
+    </div>
+  </div>
+
+  <div id="gameOverScreen" class="battle-screen" style="display:none">
+    <div class="game-over-card">
+      <div class="game-over-trophy">🏆</div>
+      <h2>Battle Over!</h2>
+      <div class="final-leaderboard" id="finalLeaderboard"></div>
+      <div class="game-over-actions">
+        <a href="/battle" class="btn btn-primary btn-lg">New Battle</a>
+        <a href="/dashboard" class="btn btn-ghost btn-lg">Dashboard</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const ROOM_CODE = '<%= room.code %>';
+  const USER_ID = '<%= user._id %>';
+  const USERNAME = '<%= user.username %>';
+  const AVATAR_COLOR = '<%= user.avatarColor %>';
+  const IS_HOST = <%= isHost %>;
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<%- include('../partials/footer', { extraScript: 'battle' }) %>

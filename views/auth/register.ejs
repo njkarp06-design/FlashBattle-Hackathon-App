@@ -1,0 +1,65 @@
+<%- include('../partials/head', { pageTitle: 'Create Account' }) %>
+<%- include('../partials/nav') %>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">⚡</div>
+    <h1 class="auth-title">Join FlashBattle</h1>
+    <p class="auth-sub">Free forever — no credit card needed</p>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/auth/register" method="POST" class="auth-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-input"
+               placeholder="Choose a username" required autocomplete="username" autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" name="password" class="form-input"
+                 placeholder="Choose a password" required autocomplete="new-password">
+          <button type="button" class="toggle-pw" onclick="togglePw('password')">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                 placeholder="Repeat your password" required autocomplete="new-password">
+          <button type="button" class="toggle-pw" onclick="togglePw('confirmPassword')">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Pick Your Colour</label>
+        <div class="avatar-picker">
+          <% avatarColors.forEach((c, i) => { %>
+          <label class="avatar-color-option">
+            <input type="radio" name="avatarColor" value="<%= c.hex %>" <%= i === 0 ? 'checked' : '' %>>
+            <span class="avatar-color-swatch" style="background:<%= c.hex %>" title="<%= c.name %>"></span>
+          </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-accent btn-full">Create Account →</button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a href="/auth/login">Sign in</a></p>
+  </div>
+</main>
+
+<script>
+function togglePw(id) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+</script>
+
+<%- include('../partials/footer') %>

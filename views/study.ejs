@@ -1,0 +1,113 @@
+<%- include('partials/head', { pageTitle: 'Study: ' + deck.title }) %>
+<%- include('partials/nav') %>
+
+<main class="study-main">
+  <div class="study-header">
+    <a href="/decks/<%= deck._id %>" class="link-back" style="white-space:nowrap;">← <%= deck.title %></a>
+    <div class="study-progress-wrap">
+      <span id="studyProgress">Card <span id="currentCard">1</span> of <span id="totalCards">0</span></span>
+      <div class="study-progress-bar">
+        <div class="study-progress-fill" id="studyProgressFill"></div>
+      </div>
+    </div>
+    <div class="study-header-right">
+      <div id="studyScore" class="study-score">
+        <span style="color:var(--success)">✓ <span id="correctCount">0</span></span>
+        <span style="color:var(--danger)">✗ <span id="wrongCount">0</span></span>
+      </div>
+      <div class="study-mode-toggle">
+        <button class="study-mode-btn active" id="flipModeBtn" onclick="setMode('flip')">Flip</button>
+        <button class="study-mode-btn" id="typeModeBtn" onclick="setMode('type')">Type</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="study-area" id="studyArea">
+
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="flashcard-inner" id="flashcardInner">
+        <div class="flashcard-front" id="cardFront">
+          <span class="flashcard-side-label">QUESTION</span>
+          <p id="frontText"></p>
+          <div class="flashcard-hint">Click · Space · Enter to reveal answer</div>
+        </div>
+        <div class="flashcard-back" id="cardBack">
+          <span class="flashcard-side-label">ANSWER</span>
+          <p id="backText"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="typing-area" id="typingArea" style="display:none">
+      <div class="typing-card">
+        <span class="flashcard-side-label">QUESTION</span>
+        <p id="typeFrontText"></p>
+        <div class="typing-input-row">
+          <input type="text" class="typing-input" id="typeAnswer" placeholder="Type your answer and press Enter..." autocomplete="off">
+          <button class="btn btn-primary" onclick="checkTypedAnswer()">Check</button>
+        </div>
+        <div class="typing-feedback" id="typingFeedback" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="study-controls" id="studyControls" style="display:none">
+      <button class="btn btn-wrong" onclick="markAnswer(false)">✗ Didn't Know</button>
+      <button class="btn btn-correct" onclick="markAnswer(true)">✓ Got It</button>
+    </div>
+
+    <div class="study-nav">
+      <button class="btn btn-ghost btn-sm" onclick="prevCard()" id="prevBtn" disabled>← Prev</button>
+      <div class="study-dots" id="studyDots"></div>
+      <button class="btn btn-ghost btn-sm" onclick="nextCard()" id="nextBtn">Next →</button>
+    </div>
+
+    <div class="study-keyboard-hint" id="keyboardHint">
+      <span>Space/Enter — flip</span>
+      <span>← → — navigate</span>
+      <span>↑ — correct &nbsp; ↓ — wrong</span>
+    </div>
+  </div>
+
+  <div class="study-complete" id="studyComplete" style="display:none">
+    <div class="complete-card">
+      <div class="complete-icon" id="completeIcon">🎉</div>
+      <h2 id="completeTitle">Session Complete!</h2>
+      <div class="complete-stats">
+        <div class="complete-stat">
+          <span class="complete-stat-val" id="finalCorrect" style="color:var(--success)">0</span>
+          <span class="complete-stat-label">Correct</span>
+        </div>
+        <div class="complete-stat">
+          <span class="complete-stat-val" id="finalWrong" style="color:var(--danger)">0</span>
+          <span class="complete-stat-label">Missed</span>
+        </div>
+        <div class="complete-stat">
+          <span class="complete-stat-val" id="finalAcc">0%</span>
+          <span class="complete-stat-label">Accuracy</span>
+        </div>
+        <div class="complete-stat xp-earned">
+          <span class="complete-stat-val" id="finalXp">+0 XP</span>
+          <span class="complete-stat-label">Earned</span>
+        </div>
+      </div>
+      <div id="bonusXpArea" style="display:none;margin-bottom:1rem;">
+        <span class="complete-bonus-badge">🎯 Daily Challenge Bonus: +50 XP</span>
+      </div>
+      <div id="newAchievementsArea" style="display:none;margin-bottom:1.5rem;">
+        <p class="complete-achievement-label">🏅 Achievement Unlocked!</p>
+        <div id="newAchievementsList"></div>
+      </div>
+      <div class="complete-actions">
+        <button class="btn btn-primary" onclick="restartStudy()">Study Again</button>
+        <a href="/decks/<%= deck._id %>" class="btn btn-ghost">Back to Deck</a>
+        <a href="/battle" class="btn btn-accent">⚔️ Battle This Deck</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const DECK_ID = '<%= deck._id %>';
+const CARDS = <%- cards %>;
+</script>
+<%- include('partials/footer', { extraScript: 'study' }) %>

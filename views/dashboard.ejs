@@ -1,0 +1,219 @@
+<%- include('partials/head', { pageTitle: 'Dashboard' }) %>
+<%- include('partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div class="dashboard-welcome">
+        <div class="user-avatar-lg" style="background: <%= user.avatarColor %>">
+          <%= user.username.charAt(0).toUpperCase() %>
+        </div>
+        <div>
+          <h1>Hey, <span class="gradient-text"><%= user.username %></span></h1>
+          <p class="text-muted">
+            Level <%= user.level %>
+            &nbsp;·&nbsp;
+            <% if (user.streak > 0) { %>🔥 <strong style="color:var(--warning)"><%= user.streak %>-day streak</strong><% } else { %>Start your streak today<% } %>
+          </p>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <a href="/decks/new" class="btn btn-primary">+ New Deck</a>
+        <a href="/battle" class="btn btn-accent">⚔️ Battle</a>
+      </div>
+    </div>
+
+    <div class="xp-bar-section">
+      <div class="xp-bar-labels">
+        <span>Level <%= user.level %></span>
+        <span class="xp-bar-center-label"><%= user.xp.toLocaleString() %> / <%= nextLevelXp.toLocaleString() %> XP</span>
+        <span>Level <%= user.level + 1 %></span>
+      </div>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" style="width: <%= xpProgress %>%">
+          <span class="xp-bar-glow"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">🃏</div>
+        <div class="stat-val"><%= decks.length %></div>
+        <div class="stat-label">My Decks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📖</div>
+        <div class="stat-val"><%= totalStudied.toLocaleString() %></div>
+        <div class="stat-label">Cards Studied</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-val"><%= user.xp.toLocaleString() %></div>
+        <div class="stat-label">Total XP</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-val"><%= user.streak %></div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+    </div>
+
+    <% if (dailyChallenge) { %>
+    <div class="daily-challenge-card">
+      <div class="daily-badge">🎯 Daily Challenge</div>
+      <h3><%= dailyChallenge.title %></h3>
+      <p><%= dailyChallenge.cardCount %> cards · <%= dailyChallenge.category %> · Complete today for <strong style="color:var(--warning)">+50 bonus XP</strong></p>
+      <% if (dailyComplete) { %>
+      <span class="daily-complete-badge">✓ Completed Today!</span>
+      <% } else { %>
+      <a href="/decks/<%= dailyChallenge._id %>/study" class="btn btn-accent btn-sm">Study Now →</a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <div class="dashboard-grid">
+      <div class="dashboard-col">
+        <div class="section-header">
+          <h2>My Decks</h2>
+          <a href="/decks" class="link-subtle">All decks →</a>
+        </div>
+
+        <% if (decks.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h3>No decks yet</h3>
+          <p>Create a deck to start learning — add any topic you want to master</p>
+          <a href="/decks/new" class="btn btn-primary" style="margin-top:0.75rem;">Create Your First Deck</a>
+        </div>
+        <% } else { %>
+        <div class="deck-list">
+          <% decks.forEach(deck => { %>
+          <div class="deck-list-card">
+            <div class="deck-list-info">
+              <span class="deck-category-badge deck-cat-<%= catSlug(deck.category) %>">
+                <%= categoryIcons[deck.category] || '📚' %> <%= deck.category %>
+              </span>
+              <h3><a href="/decks/<%= deck._id %>"><%= deck.title %></a></h3>
+              <p class="text-muted"><%= deck.cardCount %> cards<% if (deck.isPublic) { %> · <span class="badge-public">Public</span><% } %></p>
+            </div>
+            <div class="deck-list-actions">
+              <a href="/decks/<%= deck._id %>/study" class="btn btn-sm btn-primary">Study</a>
+              <a href="/decks/<%= deck._id %>/edit" class="btn btn-sm btn-ghost">Edit</a>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="dashboard-col">
+        <div class="section-header">
+          <h2>⚔️ Live Battles</h2>
+          <a href="/battle" class="link-subtle">Battle lobby →</a>
+        </div>
+        <div class="battle-quick-card">
+          <div class="battle-quick-icon">⚔️</div>
+          <h3>Challenge Anyone, Anywhere</h3>
+          <p>Pick a deck → get a 6-char code → share it → race to answer 10 questions fastest. Speed bonuses punish slow thinkers.</p>
+          <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+            <a href="/battle" class="btn btn-accent btn-sm">Create Room</a>
+            <a href="/library" class="link-subtle" style="display:flex;align-items:center;font-size:0.82rem;">Browse decks →</a>
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top:2rem;">
+          <h2>Recent Sessions</h2>
+          <a href="/stats" class="link-subtle">Full stats →</a>
+        </div>
+        <% if (recentSessions.length === 0) { %>
+        <div class="empty-mini">
+          <p>No sessions yet — <a href="/decks">pick a deck and study!</a></p>
+        </div>
+        <% } else { %>
+        <div class="sessions-list">
+          <% recentSessions.forEach(s => { %>
+          <div class="session-item">
+            <div class="session-info">
+              <span class="session-deck"><%= deckMap[s.deckId] ? deckMap[s.deckId].title : 'Unknown Deck' %></span>
+              <span class="text-muted"><%= s.cardsStudied %> cards · <span style="color:var(--warning)">+<%= s.xpEarned %> XP</span></span>
+            </div>
+            <span class="session-acc" style="color:<%= s.cardsStudied > 0 && (s.cardsCorrect/s.cardsStudied) >= 0.7 ? 'var(--success)' : 'var(--warning)' %>">
+              <%= s.cardsStudied > 0 ? Math.round((s.cardsCorrect / s.cardsStudied) * 100) : 0 %>%
+            </span>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+
+        <div class="section-header" style="margin-top:2rem;">
+          <h2>Trending Decks</h2>
+          <a href="/library" class="link-subtle">Full library →</a>
+        </div>
+        <div class="trending-list">
+          <% topDecks.forEach(deck => { %>
+          <div class="trending-item">
+            <div>
+              <strong><%= deck.title %></strong>
+              <span class="text-muted"> · <%= deck.cardCount %> cards</span>
+            </div>
+            <div class="trending-actions">
+              <span class="text-muted small"><%= deck.playCount %> plays</span>
+              <a href="/decks/<%= deck._id %>/study" class="btn btn-sm btn-ghost">Study</a>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-guide-row">
+      <a href="/decks" class="nav-guide-card">
+        <div class="nav-guide-icon">🃏</div>
+        <div>
+          <div class="nav-guide-title">My Decks</div>
+          <div class="nav-guide-desc">Create and manage your flashcard decks</div>
+        </div>
+      </a>
+      <a href="/library" class="nav-guide-card">
+        <div class="nav-guide-icon">🌍</div>
+        <div>
+          <div class="nav-guide-title">Library</div>
+          <div class="nav-guide-desc">Browse community decks across 20 subjects</div>
+        </div>
+      </a>
+      <a href="/battle" class="nav-guide-card nav-guide-battle">
+        <div class="nav-guide-icon">⚔️</div>
+        <div>
+          <div class="nav-guide-title">Battle Mode</div>
+          <div class="nav-guide-desc">Real-time multiplayer quiz battles</div>
+        </div>
+      </a>
+      <a href="/stats" class="nav-guide-card">
+        <div class="nav-guide-icon">📊</div>
+        <div>
+          <div class="nav-guide-title">My Stats</div>
+          <div class="nav-guide-desc">Study analytics, streaks and accuracy</div>
+        </div>
+      </a>
+      <a href="/leaderboard" class="nav-guide-card">
+        <div class="nav-guide-icon">🏆</div>
+        <div>
+          <div class="nav-guide-title">Rankings</div>
+          <div class="nav-guide-desc">Global XP leaderboard</div>
+        </div>
+      </a>
+      <a href="/profile" class="nav-guide-card">
+        <div class="nav-guide-icon">👤</div>
+        <div>
+          <div class="nav-guide-title">Profile</div>
+          <div class="nav-guide-desc">Achievements, history and settings</div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

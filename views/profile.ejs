@@ -1,0 +1,172 @@
+<%- include('partials/head', { pageTitle: profile.username + "'s Profile" }) %>
+<%- include('partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+
+    <div class="profile-header card">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar-lg" style="background: <%= profile.avatarColor %>">
+          <%= profile.username.charAt(0).toUpperCase() %>
+        </div>
+        <% if (isOwn) { %>
+        <button class="profile-avatar-edit-btn" onclick="document.getElementById('avatarPickerPanel').classList.toggle('open')" title="Change colour">✏️</button>
+        <% } %>
+      </div>
+      <div class="profile-info">
+        <h1><%= profile.username %></h1>
+        <p class="text-muted">Rank #<%= rank %> globally · Member since <%= new Date(profile.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) %></p>
+        <div class="profile-badges">
+          <% if (profile.streak >= 3) { %><span class="profile-badge">🔥 <%= profile.streak %>-day streak</span><% } %>
+          <% if (profile.level >= 5) { %><span class="profile-badge">⭐ Level <%= profile.level %></span><% } %>
+          <% if (rank === 1) { %><span class="profile-badge" style="border-color:var(--warning);color:var(--warning);">👑 #1 Global</span><% } else if (rank <= 3) { %><span class="profile-badge">🏆 Top 3</span><% } else if (rank <= 10) { %><span class="profile-badge">🎯 Top 10</span><% } %>
+          <% const earned = (profile.achievements || []).length; if (earned > 0) { %><span class="profile-badge">🏅 <%= earned %> Achievement<%= earned !== 1 ? 's' : '' %></span><% } %>
+        </div>
+      </div>
+      <div class="profile-xp-section">
+        <div class="profile-level-badge" style="background: <%= profile.avatarColor %>20; border-color: <%= profile.avatarColor %>">
+          <span class="profile-level-num" style="color:<%= profile.avatarColor %>">LV<%= profile.level %></span>
+        </div>
+        <div class="xp-bar-track" style="width:160px">
+          <div class="xp-bar-fill" style="width: <%= progress %>%"></div>
+        </div>
+        <span class="text-muted small"><%= profile.xp.toLocaleString() %> / <%= nextLevelXp %> XP</span>
+      </div>
+    </div>
+
+    <% if (isOwn) { %>
+    <div class="avatar-picker-panel" id="avatarPickerPanel">
+      <div class="avatar-picker-header">
+        <span>Choose your colour</span>
+        <button onclick="document.getElementById('avatarPickerPanel').classList.remove('open')" class="btn-icon">✕</button>
+      </div>
+      <form action="/profile/avatar" method="POST">
+        <div class="avatar-picker">
+          <% avatarColors.forEach(c => { %>
+          <label class="avatar-color-option">
+            <input type="radio" name="color" value="<%= c.hex %>" <%= profile.avatarColor === c.hex ? 'checked' : '' %> onchange="this.form.submit()">
+            <span class="avatar-color-swatch" style="background:<%= c.hex %>" title="<%= c.name %>">
+              <% if (profile.avatarColor === c.hex) { %>✓<% } %>
+            </span>
+          </label>
+          <% }) %>
+        </div>
+      </form>
+    </div>
+    <% } %>
+
+    <div class="profile-stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">📖</div>
+        <div class="stat-val"><%= totalStudied.toLocaleString() %></div>
+        <div class="stat-label">Cards Studied</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-val"><%= accuracy %>%</div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-val"><%= profile.streak %></div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-val"><%= profile.xp.toLocaleString() %></div>
+        <div class="stat-label">Total XP</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div>
+        <div class="section-header">
+          <h2><%= isOwn ? 'My Decks' : profile.username + "'s Decks" %></h2>
+          <% if (isOwn) { %><a href="/decks/new" class="btn btn-primary btn-sm">+ New</a><% } %>
+        </div>
+        <% if (decks.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <p><% if (isOwn) { %>No decks yet. <a href="/decks/new">Create one!</a><% } else { %>No public decks yet.<% } %></p>
+        </div>
+        <% } else { %>
+        <div class="deck-list">
+          <% decks.slice(0, 6).forEach(deck => { %>
+          <div class="deck-list-card">
+            <div class="deck-list-info">
+              <span class="deck-category-badge deck-cat-<%= catSlug(deck.category) %>">
+                <%= categoryIcons[deck.category] || '📚' %> <%= deck.category %>
+              </span>
+              <h3><a href="/decks/<%= deck._id %>"><%= deck.title %></a></h3>
+              <p class="text-muted"><%= deck.cardCount %> cards</p>
+            </div>
+            <div class="deck-list-actions">
+              <a href="/decks/<%= deck._id %>/study" class="btn btn-sm btn-primary">Study</a>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% if (decks.length > 6) { %>
+        <p class="text-muted small" style="margin-top:0.75rem;text-align:center;">+<%= decks.length - 6 %> more decks</p>
+        <% } %>
+        <% } %>
+      </div>
+
+      <div>
+        <div class="section-header">
+          <h2>Recent Activity</h2>
+          <% if (isOwn) { %><a href="/stats" class="link-subtle">Full stats →</a><% } %>
+        </div>
+        <% if (recentSessions.length === 0) { %>
+        <p class="text-muted" style="font-size:0.875rem;">No study sessions yet.</p>
+        <% } else { %>
+        <div class="sessions-list">
+          <% recentSessions.forEach(s => { %>
+          <div class="session-item">
+            <div class="session-info">
+              <span class="session-deck">Study Session</span>
+              <span class="text-muted"><%= s.cardsStudied %> cards · <%= s.cardsCorrect %> correct · <span style="color:var(--warning)">+<%= s.xpEarned %> XP</span></span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;">
+              <span class="session-acc" style="color:<%= s.cardsStudied > 0 && (s.cardsCorrect/s.cardsStudied) >= 0.7 ? 'var(--success)' : 'var(--warning)' %>">
+                <%= s.cardsStudied > 0 ? Math.round((s.cardsCorrect / s.cardsStudied) * 100) : 0 %>%
+              </span>
+              <span class="text-muted small"><%= new Date(s.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) %></span>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+
+        <% if (isOwn) { %>
+        <div style="margin-top:1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <a href="/leaderboard" class="btn btn-ghost btn-sm">🏆 Rankings</a>
+          <a href="/stats" class="btn btn-ghost btn-sm">📊 My Stats</a>
+          <a href="/battle" class="btn btn-ghost btn-sm">⚔️ Battle</a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="achievements-section">
+      <div class="section-header">
+        <h2>Achievements</h2>
+        <span class="text-muted small"><%= (profile.achievements || []).length %> / <%= allAchievements.length %> unlocked</span>
+      </div>
+      <div class="achievements-grid">
+        <% allAchievements.forEach(a => { %>
+        <% const unlocked = (profile.achievements || []).includes(a.id); %>
+        <div class="achievement-card <%= unlocked ? 'unlocked' : 'locked' %>">
+          <div class="achievement-icon"><%= a.icon %></div>
+          <div class="achievement-name"><%= a.name %></div>
+          <div class="achievement-desc"><%= a.desc %></div>
+          <% if (unlocked) { %><div class="achievement-unlocked-badge">✓ Unlocked</div><% } else { %><div class="achievement-locked-hint">Locked</div><% } %>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

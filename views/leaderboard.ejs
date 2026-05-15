@@ -1,0 +1,142 @@
+<%- include('partials/head', { pageTitle: 'Global Leaderboard' }) %>
+<%- include('partials/nav') %>
+
+<main class="page-main">
+  <div class="container container-md">
+    <div class="page-header">
+      <div>
+        <h1><span class="gradient-text">Global Rankings</span></h1>
+        <p class="text-muted">Top learners ranked by total XP earned</p>
+      </div>
+      <% if (user) { %>
+      <a href="/stats" class="btn btn-ghost btn-sm">My Stats →</a>
+      <% } %>
+    </div>
+
+    <% if (leaders.length >= 3) { %>
+    <div class="podium">
+      <div class="podium-place podium-2">
+        <div class="podium-avatar" style="background: <%= leaders[1].avatarColor %>">
+          <%= leaders[1].username.charAt(0).toUpperCase() %>
+        </div>
+        <a href="/profile/<%= leaders[1].username %>" class="podium-name"><%= leaders[1].username %></a>
+        <div class="podium-xp"><%= leaders[1].xp.toLocaleString() %> XP</div>
+        <div class="podium-block podium-block-2">2nd</div>
+      </div>
+      <div class="podium-place podium-1">
+        <div class="podium-crown">👑</div>
+        <div class="podium-avatar podium-avatar-1" style="background: <%= leaders[0].avatarColor %>">
+          <%= leaders[0].username.charAt(0).toUpperCase() %>
+        </div>
+        <a href="/profile/<%= leaders[0].username %>" class="podium-name"><%= leaders[0].username %></a>
+        <div class="podium-xp"><%= leaders[0].xp.toLocaleString() %> XP</div>
+        <div class="podium-block podium-block-1">1st</div>
+      </div>
+      <div class="podium-place podium-3">
+        <div class="podium-avatar" style="background: <%= leaders[2].avatarColor %>">
+          <%= leaders[2].username.charAt(0).toUpperCase() %>
+        </div>
+        <a href="/profile/<%= leaders[2].username %>" class="podium-name"><%= leaders[2].username %></a>
+        <div class="podium-xp"><%= leaders[2].xp.toLocaleString() %> XP</div>
+        <div class="podium-block podium-block-3">3rd</div>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="leaderboard-table">
+      <% leaders.forEach((leader, i) => { %>
+      <div class="leaderboard-row <%= user && leader._id === user._id ? 'leaderboard-row-me' : '' %>">
+        <div class="lb-rank">
+          <% if (i === 0) { %><span class="rank-medal">🥇</span>
+          <% } else if (i === 1) { %><span class="rank-medal">🥈</span>
+          <% } else if (i === 2) { %><span class="rank-medal">🥉</span>
+          <% } else { %><span class="rank-num">#<%= i + 1 %></span>
+          <% } %>
+        </div>
+        <div class="lb-avatar" style="background: <%= leader.avatarColor %>">
+          <%= leader.username.charAt(0).toUpperCase() %>
+        </div>
+        <div class="lb-user">
+          <a href="/profile/<%= leader.username %>" class="lb-username"><%= leader.username %></a>
+          <span class="lb-level">Level <%= leader.level %><% if (user && leader._id === user._id) { %> <span class="lb-you-badge">You</span><% } %><% if ((leader.achievements||[]).length > 0) { %> · <span class="lb-ach">🏅 <%= (leader.achievements||[]).length %></span><% } %></span>
+        </div>
+        <div class="lb-streak">
+          <% if (leader.streak > 0) { %>🔥 <%= leader.streak %>d<% } %>
+        </div>
+        <div class="lb-xp">
+          <span class="lb-xp-val"><%= leader.xp.toLocaleString() %></span>
+          <span class="lb-xp-label">XP</span>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <% if (user) { %>
+    <div class="lb-standing-panel">
+      <div class="lb-standing-left">
+        <div class="lb-standing-avatar" style="background:<%= user.avatarColor %>">
+          <%= user.username.charAt(0).toUpperCase() %>
+        </div>
+        <div>
+          <div class="lb-standing-name"><%= user.username %></div>
+          <div class="lb-standing-sub">Level <%= user.level %> · <%= user.xp.toLocaleString() %> XP</div>
+        </div>
+      </div>
+      <div class="lb-standing-stats">
+        <div class="lb-standing-stat">
+          <span class="lb-standing-val">#<%= userRank %></span>
+          <span class="lb-standing-label">Your Rank</span>
+        </div>
+        <% if (leaders.length > 0 && leaders[0]._id !== user._id) { %>
+        <div class="lb-standing-stat">
+          <span class="lb-standing-val" style="color:var(--warning)"><%= (leaders[0].xp - user.xp).toLocaleString() %></span>
+          <span class="lb-standing-label">XP behind #1</span>
+        </div>
+        <% } else { %>
+        <div class="lb-standing-stat">
+          <span class="lb-standing-val" style="color:var(--warning)">👑</span>
+          <span class="lb-standing-label">You're #1!</span>
+        </div>
+        <% } %>
+        <div class="lb-standing-stat">
+          <span class="lb-standing-val" style="color:var(--success)"><%= user.streak %></span>
+          <span class="lb-standing-label">Day Streak</span>
+        </div>
+      </div>
+      <div class="lb-standing-actions">
+        <a href="/profile" class="btn btn-ghost btn-sm">My Profile</a>
+        <a href="/stats" class="btn btn-primary btn-sm">My Stats →</a>
+      </div>
+    </div>
+
+    <div class="lb-xp-guide">
+      <div class="lb-xp-guide-title">⚡ How to Earn XP</div>
+      <div class="lb-xp-guide-grid">
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--primary)">+5</span><span>per card studied</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--primary)">+10</span><span>per correct answer</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--warning)">+50</span><span>daily challenge bonus</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--accent)">+100</span><span>win a battle</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--success)">×2</span><span>streak multiplier (7d)</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--text-muted)">🏅</span><span>bonus for achievements</span></div>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="lb-xp-guide">
+      <div class="lb-xp-guide-title">⚡ How to Earn XP</div>
+      <div class="lb-xp-guide-grid">
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--primary)">+5</span><span>per card studied</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--primary)">+10</span><span>per correct answer</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--warning)">+50</span><span>daily challenge bonus</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--accent)">+100</span><span>win a battle</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--success)">×2</span><span>streak multiplier (7d)</span></div>
+        <div class="lb-xp-item"><span class="lb-xp-pts" style="color:var(--text-muted)">🏅</span><span>bonus for achievements</span></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+      <a href="/auth/register" class="btn btn-primary">Join the leaderboard →</a>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,133 @@
+<%- include('partials/head', { pageTitle: 'Learn. Battle. Win.' }) %>
+<%- include('partials/nav') %>
+
+<main class="landing">
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-orb hero-orb-1"></div>
+      <div class="hero-orb hero-orb-2"></div>
+      <div class="hero-orb hero-orb-3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">⚡ Real-time multiplayer learning</div>
+      <h1 class="hero-title">
+        Learn Fast.<br>
+        <span class="gradient-text">Battle Live.</span><br>
+        Rank Up.
+      </h1>
+      <p class="hero-sub">
+        Build flashcard decks, master them solo with smart study modes, then challenge others in real-time quiz battles. Earn XP, climb leaderboards, collect achievements.
+      </p>
+      <div class="hero-actions">
+        <a href="/auth/register" class="btn btn-accent btn-lg">Start for Free →</a>
+        <a href="/auth/login" class="btn btn-ghost btn-lg">Sign In</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num"><%= userCount %>+</span>
+          <span class="hero-stat-label">Players</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num"><%= deckCount %>+</span>
+          <span class="hero-stat-label">Decks</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num"><%= sessionCount %>+</span>
+          <span class="hero-stat-label">Sessions</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="demo-card demo-card-back">
+        <span class="demo-card-label">Answer</span>
+        <p>Buenos días</p>
+      </div>
+      <div class="demo-card demo-card-front">
+        <span class="demo-card-label">Question</span>
+        <p>Good morning</p>
+        <div class="demo-card-hint">tap to flip →</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">Everything you need to <span class="gradient-text">dominate</span></h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>Build Any Deck</h3>
+          <p>Create unlimited flashcard decks on any topic. Add cards instantly, edit inline, and toggle public sharing in seconds.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Two Study Modes</h3>
+          <p>Classic flip mode or typing mode — type the answer and get instant feedback. Both track accuracy and award XP.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚔️</div>
+          <h3>Live Battles</h3>
+          <p>Create a room, share a 6-character code, and compete in real-time against up to 8 players. Speed bonuses reward fast answers.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏆</div>
+          <h3>Achievements</h3>
+          <p>Unlock 10+ achievements as you study, build decks, and win battles. Each one earns you extra XP and bragging rights.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Deep Stats</h3>
+          <p>Track your study history, accuracy trends, XP earned per day, and streaks on your personal analytics dashboard.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <h3>Public Library</h3>
+          <p>Browse community decks across every subject. Copy any deck and make it your own with one click.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How battles work</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Pick a Deck</h3>
+          <p>Choose any of your decks or browse the public library</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Share the Code</h3>
+          <p>Get a unique 6-char room code and invite your opponents</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Answer Fast</h3>
+          <p>15 seconds per question — speed bonuses reward quick correct answers</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Earn XP & Rank</h3>
+          <p>All players earn XP. Winners climb the global leaderboard</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Ready to <span class="gradient-text-warm">battle?</span></h2>
+        <p>Join the FlashBattle arena. Free forever — no credit card needed.</p>
+        <a href="/auth/register" class="btn btn-accent btn-lg">Create Free Account →</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

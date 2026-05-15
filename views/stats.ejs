@@ -1,0 +1,155 @@
+<%- include('partials/head', { pageTitle: 'My Stats' }) %>
+<%- include('partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1><span class="gradient-text">My Stats</span></h1>
+        <p class="text-muted">Your study analytics — last 30 sessions</p>
+      </div>
+      <a href="/profile" class="btn btn-ghost btn-sm">View Profile →</a>
+    </div>
+
+    <!-- Summary row -->
+    <div class="stats-summary-row">
+      <div class="stats-card">
+        <div class="stats-big-num" style="color:var(--primary);"><%= totalCardsStudied.toLocaleString() %></div>
+        <div class="stats-big-label">Cards Studied</div>
+        <% if (trends.cards !== null) { %>
+        <div class="stats-trend <%= trends.cards >= 0 ? 'trend-up' : 'trend-down' %>">
+          <%= trends.cards >= 0 ? '↑' : '↓' %> <%= Math.abs(trends.cards) %> vs last week
+        </div>
+        <% } else { %><div class="stats-trend-na">This week</div><% } %>
+      </div>
+      <div class="stats-card">
+        <div class="stats-big-num" style="color:var(--warning);"><%= totalXpFromStudy.toLocaleString() %></div>
+        <div class="stats-big-label">XP from Study</div>
+        <% if (trends.xp !== null) { %>
+        <div class="stats-trend <%= trends.xp >= 0 ? 'trend-up' : 'trend-down' %>">
+          <%= trends.xp >= 0 ? '↑' : '↓' %> <%= Math.abs(trends.xp) %> XP vs last week
+        </div>
+        <% } else { %><div class="stats-trend-na">All time total</div><% } %>
+      </div>
+      <div class="stats-card">
+        <div class="stats-big-num" style="color:var(--success);"><%= avgAccuracy %>%</div>
+        <div class="stats-big-label">Average Accuracy</div>
+        <% if (trends.accuracy !== null) { %>
+        <div class="stats-trend <%= trends.accuracy >= 0 ? 'trend-up' : 'trend-down' %>">
+          <%= trends.accuracy >= 0 ? '↑' : '↓' %> <%= Math.abs(trends.accuracy) %>pp vs last week
+        </div>
+        <% } else { %><div class="stats-trend-na">Last 30 sessions</div><% } %>
+      </div>
+      <div class="stats-card">
+        <div class="stats-big-num" style="color:var(--accent);"><%= totalTimeMins %></div>
+        <div class="stats-big-label">Minutes Studied</div>
+        <div class="stats-trend-na">All time total</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="stats-grid">
+      <div class="stats-chart-card">
+        <h3>Cards Studied — Last 7 Days</h3>
+        <div class="bar-chart">
+          <% days.forEach((day, i) => { %>
+          <div class="bar-col">
+            <div class="bar-val"><%= day.cardsStudied > 0 ? day.cardsStudied : '' %></div>
+            <div class="bar-wrap">
+              <div class="bar" style="height: <%= maxCards > 0 ? Math.round((day.cardsStudied / maxCards) * 100) : 0 %>%; background: <%= i === 6 ? 'var(--primary)' : 'rgba(0,205,180,0.4)' %>"></div>
+            </div>
+            <div class="bar-label"><%= day.label %></div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="stats-chart-card">
+        <h3>XP Earned — Last 7 Days</h3>
+        <% const maxXp = Math.max(...days.map(d => d.xpEarned), 1); %>
+        <div class="bar-chart">
+          <% days.forEach((day, i) => { %>
+          <div class="bar-col">
+            <div class="bar-val"><%= day.xpEarned > 0 ? '+' + day.xpEarned : '' %></div>
+            <div class="bar-wrap">
+              <div class="bar" style="height: <%= maxXp > 0 ? Math.round((day.xpEarned / maxXp) * 100) : 0 %>%; background: <%= i === 6 ? 'var(--warning)' : 'rgba(255,215,0,0.4)' %>"></div>
+            </div>
+            <div class="bar-label"><%= day.label %></div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="stats-chart-card">
+        <h3>Accuracy — Last 7 Days</h3>
+        <div class="bar-chart">
+          <% days.forEach((day, i) => { %>
+          <div class="bar-col">
+            <div class="bar-val"><%= day.accuracy !== null ? day.accuracy + '%' : '' %></div>
+            <div class="bar-wrap">
+              <div class="bar" style="height: <%= day.accuracy !== null ? day.accuracy : 0 %>%; background: <%= day.accuracy !== null && day.accuracy >= 80 ? 'var(--success)' : day.accuracy !== null ? 'var(--warning)' : 'var(--border)' %>"></div>
+            </div>
+            <div class="bar-label"><%= day.label %></div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="stats-chart-card">
+        <h3>Study Sessions — Last 7 Days</h3>
+        <% const maxSessions = Math.max(...days.map(d => d.sessionCount), 1); %>
+        <div class="bar-chart">
+          <% days.forEach((day, i) => { %>
+          <div class="bar-col">
+            <div class="bar-val"><%= day.sessionCount > 0 ? day.sessionCount : '' %></div>
+            <div class="bar-wrap">
+              <div class="bar" style="height: <%= maxSessions > 0 ? Math.round((day.sessionCount / maxSessions) * 100) : 0 %>%; background: <%= i === 6 ? 'var(--accent)' : 'rgba(255,107,53,0.4)' %>"></div>
+            </div>
+            <div class="bar-label"><%= day.label %></div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent sessions table -->
+    <div class="stats-chart-card" style="margin-top:0;">
+      <h3>Recent Sessions</h3>
+      <% if (sessions.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <p>No study sessions yet. <a href="/decks" class="link-subtle">Go study something!</a></p>
+      </div>
+      <% } else { %>
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Cards</th>
+            <th>Correct</th>
+            <th>Accuracy</th>
+            <th>XP</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sessions.forEach(s => { %>
+          <tr>
+            <td><%= new Date(s.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+            <td><%= s.cardsStudied %></td>
+            <td><%= s.cardsCorrect %></td>
+            <td style="color: <%= s.cardsStudied > 0 && (s.cardsCorrect/s.cardsStudied) >= 0.8 ? 'var(--success)' : 'var(--warning)' %>; font-weight:700;">
+              <%= s.cardsStudied > 0 ? Math.round((s.cardsCorrect / s.cardsStudied) * 100) : 0 %>%
+            </td>
+            <td style="color:var(--warning); font-weight:700;">+<%= s.xpEarned %></td>
+            <td><%= s.durationSeconds ? Math.floor(s.durationSeconds / 60) + 'm ' + (s.durationSeconds % 60) + 's' : '—' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

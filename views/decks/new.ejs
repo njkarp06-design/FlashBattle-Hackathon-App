@@ -1,0 +1,68 @@
+<%- include('../partials/head', { pageTitle: 'New Deck' }) %>
+<%- include('../partials/nav') %>
+
+<main class="page-main">
+  <div class="container container-sm">
+    <div class="page-header">
+      <div>
+        <a href="/decks" class="link-back">← My Decks</a>
+        <h1>Create a New Deck</h1>
+      </div>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <div class="card">
+      <form action="/decks/new" method="POST" class="form-stack">
+        <div class="form-group">
+          <label for="title">Deck Title <span class="required">*</span></label>
+          <input type="text" id="title" name="title" class="form-input"
+                 placeholder="e.g. Spanish Verbs, JavaScript Concepts, World History..." required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" class="form-input form-textarea"
+                    placeholder="What's this deck for? Who is it aimed at? (optional)" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Category</label>
+          <div class="category-picker">
+            <% categories.forEach(cat => { %>
+            <label class="category-option">
+              <input type="radio" name="category" value="<%= cat %>" <%= cat === 'General Knowledge' ? 'checked' : '' %>>
+              <span class="category-option-inner">
+                <span class="category-option-icon"><%= categoryIcons[cat] || '📚' %></span>
+                <span class="category-option-name"><%= cat %></span>
+              </span>
+            </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="toggle-label">
+            <div>
+              <span style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Make Public</span>
+              <div class="form-hint" style="margin-top:0.15rem;">Public decks appear in the library for everyone to use and battle with</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" name="isPublic" id="isPublic">
+              <span class="toggle-slider"></span>
+            </label>
+          </label>
+        </div>
+
+        <div class="form-footer">
+          <a href="/decks" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">Create Deck & Add Cards →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,56 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="<%= sessionUser ? '/dashboard' : '/' %>" class="nav-brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-text">FlashBattle</span>
+    </a>
+
+    <% if (sessionUser) { %>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>">Home</a>
+      <a href="/decks" class="nav-link <%= currentPath.startsWith('/decks') ? 'active' : '' %>">My Decks</a>
+      <a href="/library" class="nav-link <%= currentPath.startsWith('/library') ? 'active' : '' %>">Library</a>
+      <a href="/battle" class="nav-link nav-battle <%= currentPath.startsWith('/battle') ? 'active' : '' %>">⚔️ Battle</a>
+      <a href="/leaderboard" class="nav-link <%= currentPath === '/leaderboard' ? 'active' : '' %>">Rankings</a>
+      <a href="/stats" class="nav-link <%= currentPath === '/stats' ? 'active' : '' %>">Stats</a>
+    </div>
+
+    <div class="nav-user">
+      <div class="nav-xp-bar" title="<%= sessionUser.xp %> XP — Level <%= sessionUser.level %>">
+        <span class="nav-level">LV<%= sessionUser.level %></span>
+        <div class="xp-mini-bar">
+          <div class="xp-mini-fill" style="width: <%= Math.min(100, ((sessionUser.xp % 200) / 200) * 100) %>%"></div>
+        </div>
+      </div>
+      <a href="/profile" class="nav-avatar" style="background: <%= sessionUser.avatarColor %>" title="<%= sessionUser.username %>">
+        <%= sessionUser.username.charAt(0).toUpperCase() %>
+      </a>
+      <form action="/auth/logout" method="POST" style="display:inline">
+        <button type="submit" class="btn-icon" title="Sign out" style="font-size:1.1rem;">↩</button>
+      </form>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+    <% } else { %>
+    <div class="nav-auth">
+      <a href="/auth/login" class="btn btn-ghost btn-sm">Sign In</a>
+      <a href="/auth/register" class="btn btn-accent btn-sm">Get Started</a>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (sessionUser) { %>
+  <div class="nav-mobile" id="navMobile">
+    <a href="/dashboard" class="nav-mobile-link">Home</a>
+    <a href="/decks" class="nav-mobile-link">My Decks</a>
+    <a href="/library" class="nav-mobile-link">Library</a>
+    <a href="/battle" class="nav-mobile-link">⚔️ Battle</a>
+    <a href="/leaderboard" class="nav-mobile-link">Rankings</a>
+    <a href="/stats" class="nav-mobile-link">Stats</a>
+    <a href="/profile" class="nav-mobile-link">Profile</a>
+    <form action="/auth/logout" method="POST">
+      <button type="submit" class="nav-mobile-link" style="width:100%;text-align:left;background:none;border:none;color:inherit;cursor:pointer;font-family:inherit;font-size:inherit;">Sign Out</button>
+    </form>
+  </div>
+  <% } %>
+</nav>

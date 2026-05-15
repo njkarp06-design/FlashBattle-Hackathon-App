@@ -1,0 +1,134 @@
+<%- include('../partials/head', { pageTitle: 'Battle Lobby' }) %>
+<%- include('../partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>⚔️ <span class="gradient-text">Battle Mode</span></h1>
+        <p class="text-muted">Real-time multiplayer quiz battles — create a room or join one with a code</p>
+      </div>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <div class="battle-how-it-works">
+      <div class="how-step">
+        <div class="how-step-num">1</div>
+        <div class="how-step-text"><strong>Pick a deck</strong> with 4+ cards</div>
+      </div>
+      <div class="how-step-arrow">→</div>
+      <div class="how-step">
+        <div class="how-step-num">2</div>
+        <div class="how-step-text"><strong>Share the code</strong> — up to 8 players</div>
+      </div>
+      <div class="how-step-arrow">→</div>
+      <div class="how-step">
+        <div class="how-step-num">3</div>
+        <div class="how-step-text"><strong>Answer fast</strong> — 15 sec per question</div>
+      </div>
+      <div class="how-step-arrow">→</div>
+      <div class="how-step">
+        <div class="how-step-num">4</div>
+        <div class="how-step-text"><strong>Earn XP</strong> — winner gets bonus</div>
+      </div>
+    </div>
+
+    <div class="battle-lobby-grid">
+      <div class="lobby-panel card">
+        <h2>🚀 Create a Room</h2>
+        <p class="text-muted" style="margin-bottom:1.25rem;">Pick a deck, get a room code, share it with anyone. You can even play solo for practice.</p>
+
+        <form action="/battle/create" method="POST" class="form-stack">
+          <div class="form-group">
+            <label for="deckId">Choose a Deck</label>
+            <select name="deckId" id="deckId" class="form-input form-select" required>
+              <option value="" disabled selected>Select a deck...</option>
+              <% if (myDecks.length > 0) { %>
+              <optgroup label="── My Decks ──">
+                <% myDecks.forEach(d => { %>
+                <option value="<%= d._id %>"><%= d.title %> (<%= d.cardCount %> cards)</option>
+                <% }) %>
+              </optgroup>
+              <% } %>
+              <% const others = publicDecks.filter(d => d.userId !== user._id); %>
+              <% if (others.length > 0) { %>
+              <optgroup label="── Popular Public Decks ──">
+                <% others.forEach(d => { %>
+                <option value="<%= d._id %>"><%= d.title %> (<%= d.cardCount %> cards)</option>
+                <% }) %>
+              </optgroup>
+              <% } %>
+            </select>
+          </div>
+
+          <div class="battle-scoring-box">
+            <div class="battle-scoring-title">⚡ Scoring System</div>
+            <div class="battle-scoring-grid">
+              <div class="scoring-item">
+                <span class="scoring-label">Correct answer</span>
+                <span class="scoring-val" style="color:var(--success)">+100 pts</span>
+              </div>
+              <div class="scoring-item">
+                <span class="scoring-label">Speed bonus (max)</span>
+                <span class="scoring-val" style="color:var(--primary)">+90 pts</span>
+              </div>
+              <div class="scoring-item">
+                <span class="scoring-label">Best per question</span>
+                <span class="scoring-val" style="color:var(--warning)">190 pts</span>
+              </div>
+              <div class="scoring-item">
+                <span class="scoring-label">Winner bonus</span>
+                <span class="scoring-val" style="color:var(--accent)">+100 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-accent btn-full btn-lg">Create Battle Room →</button>
+        </form>
+      </div>
+
+      <div class="lobby-divider">
+        <span>or</span>
+      </div>
+
+      <div class="lobby-panel card">
+        <h2>🔗 Join a Room</h2>
+        <p class="text-muted" style="margin-bottom:1.25rem;">Got a 6-character code from a friend? Enter it below to jump straight in.</p>
+
+        <form action="/battle/join" method="POST" class="form-stack">
+          <div class="form-group">
+            <label for="code">Room Code</label>
+            <input type="text" id="code" name="code" class="form-input code-input"
+                   placeholder="ABC123" maxlength="6"
+                   style="text-transform:uppercase;letter-spacing:0.3em;font-size:1.75rem;text-align:center;font-weight:900;height:72px;"
+                   required autofocus oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg">Join Battle →</button>
+        </form>
+
+        <div class="lobby-tips">
+          <h3>What to expect</h3>
+          <ul>
+            <li>📋 10 multiple-choice questions per battle</li>
+            <li>⏱ 15 seconds to answer each question</li>
+            <li>🏃 Answer fast — speed bonus counts down live</li>
+            <li>📊 Live leaderboard between questions</li>
+            <li>🏆 Top scorer wins, everyone earns XP</li>
+            <li>🔄 Host can start a rematch instantly</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <% if (myDecks.length === 0) { %>
+    <div class="alert alert-info" style="margin-top:1.5rem;">
+      💡 You don't have any decks yet. <a href="/decks/new" style="color:inherit;font-weight:700;">Create one now</a> or <a href="/library" style="color:inherit;font-weight:700;">copy one from the library</a> to start battling.
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

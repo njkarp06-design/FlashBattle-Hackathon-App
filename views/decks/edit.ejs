@@ -1,0 +1,142 @@
+<%- include('../partials/head', { pageTitle: 'Edit: ' + deck.title }) %>
+<%- include('../partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <a href="/decks/<%= deck._id %>" class="link-back">← Back to Deck</a>
+        <h1>Edit Deck</h1>
+      </div>
+      <div class="flex gap-sm">
+        <a href="/decks/<%= deck._id %>/study" class="btn btn-primary btn-sm">📖 Study Now</a>
+        <a href="/battle?deck=<%= deck._id %>" class="btn btn-ghost btn-sm">⚔️ Battle</a>
+        <form action="/decks/<%= deck._id %>/delete" method="POST" onsubmit="return confirm('Delete this deck and all its cards? This cannot be undone.')">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <div class="edit-layout">
+      <div class="edit-settings card">
+        <h2>Settings</h2>
+        <form action="/decks/<%= deck._id %>/update" method="POST" class="form-stack">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" class="form-input" value="<%= deck.title %>" required>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-input form-textarea" rows="2"><%= deck.description %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Category</label>
+            <div class="category-picker category-picker-compact">
+              <% categories.forEach(cat => { %>
+              <label class="category-option">
+                <input type="radio" name="category" value="<%= cat %>" <%= deck.category === cat ? 'checked' : '' %>>
+                <span class="category-option-inner">
+                  <span class="category-option-icon"><%= categoryIcons[cat] || '📚' %></span>
+                  <span class="category-option-name"><%= cat %></span>
+                </span>
+              </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-label">
+              <span>Public</span>
+              <label class="toggle">
+                <input type="checkbox" name="isPublic" <%= deck.isPublic ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </label>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+
+      <div class="edit-cards card">
+        <div class="section-header">
+          <h2>Cards <span class="badge-count"><%= cards.length %></span></h2>
+          <span class="text-muted small">Need 4+ cards to use in Battle mode</span>
+        </div>
+
+        <div class="add-card-form" id="addCardForm">
+          <div class="card-inputs">
+            <div class="form-group">
+              <label>Front — Question / Term</label>
+              <input type="text" id="newFront" class="form-input" placeholder="e.g. What is photosynthesis?">
+            </div>
+            <div class="card-arrow">⇄</div>
+            <div class="form-group">
+              <label>Back — Answer / Definition</label>
+              <input type="text" id="newBack" class="form-input" placeholder="e.g. The process plants use to make food from sunlight">
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="addCard('<%= deck._id %>')">+ Add Card</button>
+            <span class="text-muted small">Press Enter to jump between fields, Enter again to add</span>
+          </div>
+          <div id="addCardError" class="alert alert-error" style="display:none"></div>
+        </div>
+
+        <div class="bulk-import-section" id="bulkImportSection">
+          <button class="bulk-import-toggle" onclick="document.getElementById('bulkImportPanel').classList.toggle('open')">
+            ⚡ Bulk Import — paste multiple cards at once
+          </button>
+          <div class="bulk-import-panel" id="bulkImportPanel">
+            <form action="/decks/<%= deck._id %>/bulk-import" method="POST">
+              <div class="form-group" style="margin-bottom:0.75rem;">
+                <label>Paste cards — one per line, separated by your chosen delimiter</label>
+                <textarea name="bulkText" class="form-input form-textarea" rows="6"
+                  placeholder="Photosynthesis | Process plants use to convert sunlight to glucose&#10;Mitosis | Cell division producing two identical daughter cells&#10;DNA | Double-helix molecule carrying genetic information"></textarea>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:140px;">
+                  <label>Delimiter</label>
+                  <select name="delimiter" class="form-input form-select">
+                    <option value="pipe">Pipe ( | )</option>
+                    <option value="tab">Tab</option>
+                    <option value="colon">Colon ( : )</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:1.2rem;">Import Cards</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <% if (typeof query !== 'undefined' && query && query.imported) { %>
+        <div class="alert alert-success" style="margin-bottom:1rem;">✓ Imported <%= query.imported %> card<%= query.imported !== '1' ? 's' : '' %> successfully.</div>
+        <% } %>
+
+        <div class="cards-list" id="cardsList">
+          <% if (cards.length === 0) { %>
+          <div class="empty-state" id="emptyCards">
+            <div class="empty-icon">🃏</div>
+            <p>No cards yet — add your first card above.</p>
+          </div>
+          <% } %>
+          <% cards.forEach(card => { %>
+          <div class="card-item" id="card-<%= card._id %>">
+            <div class="card-item-sides">
+              <div class="card-item-front"><span class="card-item-label">Front</span><%= card.front %></div>
+              <div class="card-item-sep">⇄</div>
+              <div class="card-item-back"><span class="card-item-label">Back</span><%= card.back %></div>
+            </div>
+            <button class="btn-delete-card" onclick="deleteCard('<%= deck._id %>', '<%= card._id %>')" title="Delete card">✕</button>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer', { extraScript: 'deck-builder' }) %>

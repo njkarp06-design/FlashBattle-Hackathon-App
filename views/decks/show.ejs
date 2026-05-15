@@ -1,0 +1,63 @@
+<%- include('../partials/head', { pageTitle: deck.title }) %>
+<%- include('../partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <a href="<%= isOwner ? '/decks' : '/library' %>" class="link-back">← <%= isOwner ? 'My Decks' : 'Library' %></a>
+        <div class="deck-show-title">
+          <span class="deck-category-badge deck-cat-<%= catSlug(deck.category) %>"><%= categoryIcons[deck.category] || '📚' %> <%= deck.category %></span>
+          <h1><%= deck.title %></h1>
+        </div>
+        <p class="text-muted">
+          by <a href="/profile/<%= deckOwner.username %>" class="link-user"><%= deckOwner.username %></a>
+          · <%= cards.length %> cards
+          · <%= deck.playCount %> plays
+          <% if (deck.isPublic) { %> · <span class="badge-public">Public</span><% } %>
+        </p>
+        <% if (deck.description) { %><p style="margin-top:0.4rem;"><%= deck.description %></p><% } %>
+      </div>
+      <div class="flex gap-sm flex-wrap">
+        <% if (isOwner) { %>
+          <a href="/decks/<%= deck._id %>/edit" class="btn btn-ghost">Edit</a>
+        <% } else { %>
+          <form action="/library/<%= deck._id %>/copy" method="POST">
+            <button type="submit" class="btn btn-ghost">Copy to My Decks</button>
+          </form>
+        <% } %>
+        <a href="/battle" class="btn btn-ghost">⚔️ Battle</a>
+        <a href="/decks/<%= deck._id %>/study" class="btn btn-primary">Study Now →</a>
+      </div>
+    </div>
+
+    <% if (cards.length === 0) { %>
+    <div class="empty-state">
+      <div class="empty-icon">🃏</div>
+      <h3>No cards in this deck</h3>
+      <% if (isOwner) { %><a href="/decks/<%= deck._id %>/edit" class="btn btn-primary">Add Cards</a><% } %>
+    </div>
+    <% } else { %>
+    <p class="text-muted" style="margin-bottom:1rem;font-size:0.82rem;">Click any card to flip it</p>
+    <div class="cards-preview-grid">
+      <% cards.forEach((card, i) => { %>
+      <div class="preview-card" onclick="this.classList.toggle('flipped')" title="Click to flip">
+        <div class="preview-card-inner">
+          <div class="preview-card-front">
+            <span class="preview-card-num"><%= i + 1 %></span>
+            <p><%= card.front %></p>
+            <span class="preview-flip-hint">tap to reveal</span>
+          </div>
+          <div class="preview-card-back">
+            <span class="preview-card-num"><%= i + 1 %></span>
+            <p><%= card.back %></p>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

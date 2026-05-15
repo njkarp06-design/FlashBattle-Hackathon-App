@@ -1,0 +1,54 @@
+<%- include('../partials/head', { pageTitle: 'Sign In' }) %>
+<%- include('../partials/nav') %>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">⚡</div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to continue your streak</p>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/auth/login" method="POST" class="auth-form">
+      <input type="hidden" name="next" value="<%= next %>">
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-input"
+               placeholder="Enter your username" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" name="password" class="form-input"
+                 placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="toggle-pw" onclick="togglePw('password')">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-accent btn-full">Sign In →</button>
+    </form>
+
+    <div class="auth-divider"><span>or try the demo</span></div>
+    <form action="/auth/login" method="POST">
+      <input type="hidden" name="next" value="/dashboard">
+      <input type="hidden" name="username" value="FlashMaster">
+      <input type="hidden" name="password" value="demo123">
+      <button type="submit" class="btn btn-ghost btn-full">Sign in as Demo User</button>
+    </form>
+
+    <p class="auth-switch">Don't have an account? <a href="/auth/register">Sign up free</a></p>
+  </div>
+</main>
+
+<script>
+function togglePw(id) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+</script>
+
+<%- include('../partials/footer') %>

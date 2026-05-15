@@ -1,0 +1,81 @@
+<%- include('partials/head', { pageTitle: 'Public Library' }) %>
+<%- include('partials/nav') %>
+
+<main class="page-main">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>Public Library</h1>
+        <p class="text-muted">Browse, study and copy community decks — copy any deck to make it your own</p>
+      </div>
+    </div>
+
+    <div class="library-controls">
+      <form action="/library" method="GET" class="library-search-form">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" name="search" class="form-input search-input"
+                 placeholder="Search decks by title or description..." value="<%= search %>">
+          <% if (search) { %><a href="/library<%= activeCategory !== 'All' ? '?category=' + encodeURIComponent(activeCategory) : '' %>" class="search-clear">✕</a><% } %>
+        </div>
+        <% if (activeCategory !== 'All') { %>
+        <input type="hidden" name="category" value="<%= activeCategory %>">
+        <% } %>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+
+      <div class="category-tabs">
+        <a href="/library<%= search ? '?search=' + encodeURIComponent(search) : '' %>"
+           class="category-tab <%= activeCategory === 'All' ? 'active' : '' %>">All</a>
+        <% categories.filter(c => c !== 'All').forEach(cat => { %>
+        <a href="/library?category=<%= encodeURIComponent(cat) %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+           class="category-tab <%= activeCategory === cat ? 'active' : '' %>">
+          <%= categoryIcons[cat] || '' %> <%= cat %>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+
+    <% if (decks.length === 0) { %>
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>No decks found</h3>
+      <p>Try a different search term or category</p>
+      <a href="/library" class="btn btn-ghost" style="margin-top:0.75rem;">Clear filters</a>
+    </div>
+    <% } else { %>
+    <div class="library-results-bar">
+      <span class="text-muted small"><strong style="color:var(--text)"><%= decks.length %></strong> deck<%= decks.length !== 1 ? 's' : '' %><% if (activeCategory !== 'All') { %> in <%= activeCategory %><% } %><% if (search) { %> matching "<%= search %>"<% } %></span>
+    </div>
+    <div class="decks-grid">
+      <% decks.forEach(deck => { %>
+      <div class="deck-card">
+        <div class="deck-card-top">
+          <span class="deck-category-badge deck-cat-<%= catSlug(deck.category) %>">
+            <%= categoryIcons[deck.category] || '📚' %> <%= deck.category %>
+          </span>
+          <span class="text-muted small"><%= deck.playCount %> plays</span>
+        </div>
+        <h3 class="deck-card-title"><%= deck.title %></h3>
+        <p class="deck-card-desc"><%= deck.description || 'No description' %></p>
+        <div class="deck-card-meta">
+          <span><%= deck.cardCount %> cards</span>
+          <span>by <a href="/profile/<%= ownerMap[deck.userId] ? ownerMap[deck.userId].username : '#' %>" class="link-user">
+            <%= ownerMap[deck.userId] ? ownerMap[deck.userId].username : 'Unknown' %>
+          </a></span>
+        </div>
+        <div class="deck-card-actions">
+          <a href="/decks/<%= deck._id %>/study" class="btn btn-primary btn-sm">Study</a>
+          <form action="/library/<%= deck._id %>/copy" method="POST" style="display:inline">
+            <button type="submit" class="btn btn-ghost btn-sm">Copy to My Decks</button>
+          </form>
+          <a href="/decks/<%= deck._id %>" class="btn btn-ghost btn-sm">View</a>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

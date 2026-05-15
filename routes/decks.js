@@ -255,7 +255,7 @@ router.post('/:id/bulk-import', requireAuth, async (req, res) => {
   if (!bulkText || !bulkText.trim()) return res.redirect(`/decks/${deck._id}/edit`);
 
   const sep = delimiter === 'tab' ? '\t' : (delimiter === 'colon' ? ':' : '|');
-  const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 500);
   let added = 0;
   let startPos = await db.cards.countAsync({ deckId: deck._id });
 

@@ -46,6 +46,12 @@ function initSocket(io) {
     let currentUser = null;
 
     socket.on('join-battle', async ({ code, userId, username, avatarColor }) => {
+      const sessionUserId = socket.request.session?.userId;
+      if (!sessionUserId || sessionUserId !== userId) {
+        socket.emit('error', { message: 'Authentication required.' });
+        return;
+      }
+
       const room = await db.battleRooms.findOneAsync({ code });
       if (!room || room.status === 'finished') {
         socket.emit('error', { message: 'Room not found or game already ended.' });
@@ -76,7 +82,8 @@ function initSocket(io) {
         existing.socketId = socket.id;
         currentUser = existing;
       } else {
-        currentUser = { userId, username, avatarColor, score: 0, answers: [] };
+        const safeName = String(username || '').trim().slice(0, 30) || 'Player';
+        currentUser = { userId, username: safeName, avatarColor, score: 0, answers: [] };
         roomState.players.set(userId, { ...currentUser, socketId: socket.id });
       }
 
@@ -97,6 +104,8 @@ function initSocket(io) {
     });
 
     socket.on('start-game', async ({ code, userId }) => {
+      const sessionUserId = socket.request.session?.userId;
+      if (!sessionUserId || sessionUserId !== userId) return;
       const roomState = activeRooms.get(code);
       if (!roomState || roomState.hostId !== userId) return;
       if (roomState.players.size < 1) {

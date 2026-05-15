@@ -27,12 +27,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'flashbattle-secret',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true },
-}));
+});
+
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
 
 app.use(async (req, res, next) => {
   res.locals.currentPath = req.path;

@@ -75,13 +75,21 @@ router.get('/:id/edit', requireAuth, async (req, res) => {
 });
 
 router.post('/:id/update', requireAuth, async (req, res) => {
+  const user = await db.users.findOneAsync({ _id: req.session.userId });
   const deck = await db.decks.findOneAsync({ _id: req.params.id, userId: req.session.userId });
   if (!deck) return res.redirect('/decks');
 
   const { title, description, category, isPublic } = req.body;
+  const trimmedTitle = (title || '').trim();
+  if (trimmedTitle.length < 2) {
+    const cards = await db.cards.findAsync({ deckId: deck._id }).sort({ position: 1 });
+    return res.render('decks/edit', { user, deck, cards, categories: CATEGORIES, categoryIcons: CATEGORY_ICONS, catSlug, error: 'Deck title must be at least 2 characters.', query: {} });
+  }
+  const safeCategory = CATEGORIES.includes(category) ? category : deck.category;
+
   await db.decks.updateAsync(
     { _id: deck._id },
-    { $set: { title: title.trim(), description: (description || '').trim(), category, isPublic: isPublic === 'on', updatedAt: new Date() } }
+    { $set: { title: trimmedTitle, description: (description || '').trim(), category: safeCategory, isPublic: isPublic === 'on', updatedAt: new Date() } }
   );
   res.redirect(`/decks/${deck._id}/edit`);
 });
@@ -263,9 +271,10 @@ router.post('/:id/bulk-import', requireAuth, async (req, res) => {
 
   if (added > 0) {
     await db.decks.updateAsync({ _id: deck._id }, { $set: { cardCount: startPos, updatedAt: new Date() } });
+    return res.redirect(`/decks/${deck._id}/edit?imported=${added}`);
   }
 
-  res.redirect(`/decks/${deck._id}/edit?imported=${added}`);
+  res.redirect(`/decks/${deck._id}/edit`);
 });
 
 module.exports = router;

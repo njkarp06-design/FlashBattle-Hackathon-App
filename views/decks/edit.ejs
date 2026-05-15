@@ -10,7 +10,7 @@
       </div>
       <div class="flex gap-sm">
         <a href="/decks/<%= deck._id %>/study" class="btn btn-primary btn-sm">📖 Study Now</a>
-        <a href="/battle?deck=<%= deck._id %>" class="btn btn-ghost btn-sm">⚔️ Battle</a>
+        <a href="/battle" class="btn btn-ghost btn-sm">⚔️ Battle</a>
         <form action="/decks/<%= deck._id %>/delete" method="POST" onsubmit="return confirm('Delete this deck and all its cards? This cannot be undone.')">
           <button type="submit" class="btn btn-danger btn-sm">Delete</button>
         </form>

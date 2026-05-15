@@ -139,7 +139,7 @@ router.get('/:id/study', requireAuth, async (req, res) => {
   const cards = await db.cards.findAsync({ deckId: deck._id }).sort({ position: 1 });
   if (cards.length === 0) return res.redirect(`/decks/${deck._id}`);
 
-  res.render('study', { user, deck, cards: JSON.stringify(cards) });
+  res.render('study', { user, deck, cards: JSON.stringify(cards).replace(/</g, '\\u003c') });
 });
 
 router.post('/:id/study/complete', requireAuth, async (req, res) => {

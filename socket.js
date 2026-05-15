@@ -30,6 +30,16 @@ async function buildQuestions(deckId) {
   });
 }
 
+function playerList(roomState) {
+  return [...roomState.players.values()].map(p => ({
+    userId: p.userId,
+    username: p.username,
+    avatarColor: p.avatarColor,
+    score: p.score,
+    isHost: p.userId === roomState.hostId,
+  }));
+}
+
 function initSocket(io) {
   io.on('connection', socket => {
     let currentRoom = null;
@@ -43,8 +53,6 @@ function initSocket(io) {
       }
 
       currentRoom = code;
-      currentUser = { userId, username, avatarColor, score: 0, answers: [] };
-
       socket.join(code);
 
       if (!activeRooms.has(code)) {
@@ -61,17 +69,31 @@ function initSocket(io) {
       }
 
       const roomState = activeRooms.get(code);
-      roomState.players.set(userId, { ...currentUser, socketId: socket.id });
+      const isRejoin = roomState.players.has(userId);
 
-      const playerList = [...roomState.players.values()].map(p => ({
-        userId: p.userId,
-        username: p.username,
-        avatarColor: p.avatarColor,
-        score: p.score,
-        isHost: p.userId === roomState.hostId,
-      }));
+      if (isRejoin) {
+        const existing = roomState.players.get(userId);
+        existing.socketId = socket.id;
+        currentUser = existing;
+      } else {
+        currentUser = { userId, username, avatarColor, score: 0, answers: [] };
+        roomState.players.set(userId, { ...currentUser, socketId: socket.id });
+      }
 
-      io.to(code).emit('room-update', { players: playerList, status: roomState.status });
+      io.to(code).emit('room-update', { players: playerList(roomState), status: roomState.status });
+
+      // Catch up a rejoining player if the game is already in progress
+      if (isRejoin && roomState.status === 'playing' && roomState.questions) {
+        const q = roomState.questions[roomState.currentQ];
+        socket.emit('game-start', { totalQuestions: roomState.questions.length });
+        socket.emit('question', {
+          index: roomState.currentQ,
+          total: roomState.questions.length,
+          front: q.front,
+          options: q.options,
+          timeLimit: 15,
+        });
+      }
     });
 
     socket.on('start-game', async ({ code, userId }) => {
@@ -84,7 +106,7 @@ function initSocket(io) {
 
       const questions = await buildQuestions(roomState.deckId);
       if (!questions) {
-        socket.emit('error', { message: 'Not enough cards in this deck.' });
+        socket.emit('error', { message: 'Not enough cards in this deck (need at least 4).' });
         return;
       }
 
@@ -108,7 +130,7 @@ function initSocket(io) {
 
       const q = roomState.questions[roomState.currentQ];
       const isCorrect = answer === q.correctAnswer;
-      const points = isCorrect ? Math.round(100 + timeLeft * 6) : 0;
+      const points = isCorrect ? Math.round(100 + (timeLeft || 0) * 6) : 0;
 
       const player = roomState.players.get(userId);
       if (player) {
@@ -141,15 +163,29 @@ function initSocket(io) {
         return;
       }
 
-      const playerList = [...roomState.players.values()].map(p => ({
-        userId: p.userId,
-        username: p.username,
-        avatarColor: p.avatarColor,
-        score: p.score,
-        isHost: p.userId === roomState.hostId,
-      }));
+      // Transfer host to next remaining player if host left
+      if (currentUser.userId === roomState.hostId) {
+        const newHost = [...roomState.players.values()][0];
+        roomState.hostId = newHost.userId;
+        io.to(currentRoom).emit('host-changed', {
+          newHostId: newHost.userId,
+          newHostName: newHost.username,
+        });
+      }
 
-      io.to(currentRoom).emit('room-update', { players: playerList, status: roomState.status });
+      io.to(currentRoom).emit('room-update', {
+        players: playerList(roomState),
+        status: roomState.status,
+      });
+
+      // If all remaining players have already answered this round, advance
+      if (
+        roomState.status === 'playing' &&
+        roomState.answeredThisRound.size >= roomState.players.size
+      ) {
+        if (roomState.questionTimer) clearTimeout(roomState.questionTimer);
+        advanceQuestion(io, currentRoom, roomState).catch(() => {});
+      }
     });
   });
 }

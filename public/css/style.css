@@ -1570,3 +1570,63 @@ a:hover { color: var(--primary-dark); }
   .cta-box { padding: 2.5rem 1.5rem; }
 }
 
+/* ===================== TOAST NOTIFICATIONS ===================== */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(0.75rem);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - 2rem);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.toast.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.toast-error { border-color: rgba(248,113,113,0.5); color: var(--danger); }
+.toast.toast-success { border-color: rgba(52,211,153,0.5); color: var(--success); }
+.toast.toast-info { border-color: rgba(0,205,180,0.4); color: var(--primary); }
+
+/* ===================== BATTLE SCORE STRIP ===================== */
+.battle-scores-strip {
+  display: none;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+.score-chip {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.35rem 0.75rem 0.35rem 0.4rem;
+  transition: border-color 0.2s;
+}
+.score-chip-me {
+  border-color: rgba(0,205,180,0.4);
+  background: rgba(0,205,180,0.06);
+}
+.score-chip-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.score-chip-info { display: flex; flex-direction: column; line-height: 1.2; }
+.score-chip-name { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
+.score-chip-score { font-size: 0.85rem; font-weight: 900; color: var(--warning); }
+

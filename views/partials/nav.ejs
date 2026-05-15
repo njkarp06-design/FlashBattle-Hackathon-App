@@ -19,7 +19,7 @@
       <div class="nav-xp-bar" title="<%= sessionUser.xp %> XP — Level <%= sessionUser.level %>">
         <span class="nav-level">LV<%= sessionUser.level %></span>
         <div class="xp-mini-bar">
-          <div class="xp-mini-fill" style="width: <%= Math.min(100, ((sessionUser.xp % 200) / 200) * 100) %>%"></div>
+          <div class="xp-mini-fill" style="width: <%= Math.min(100, ((sessionUser.xp - (sessionUser.level - 1) * 200) / 200) * 100) %>%"></div>
         </div>
       </div>
       <a href="/profile" class="nav-avatar" style="background: <%= sessionUser.avatarColor %>" title="<%= sessionUser.username %>">

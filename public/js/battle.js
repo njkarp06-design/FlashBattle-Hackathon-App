@@ -5,6 +5,7 @@ let timeLeft = 15;
 let timerInterval = null;
 let hasAnswered = false;
 let totalQuestions = 0;
+let selectedBtn = null;
 
 socket.emit('join-battle', {
   code: ROOM_CODE,
@@ -15,6 +16,7 @@ socket.emit('join-battle', {
 
 socket.on('room-update', ({ players }) => {
   renderPlayers(players);
+  renderScoresStrip(players);
   if (IS_HOST) {
     const btn = document.getElementById('startBtn');
     if (btn) {
@@ -31,6 +33,7 @@ socket.on('game-start', ({ totalQuestions: tq }) => {
 
 socket.on('question', ({ index, total, front, options, timeLimit }) => {
   hasAnswered = false;
+  selectedBtn = null;
   document.getElementById('questionCounter').textContent = `Question ${index + 1} of ${total}`;
   document.getElementById('questionText').textContent = front;
   document.getElementById('answerResult').style.display = 'none';
@@ -41,8 +44,9 @@ socket.on('question', ({ index, total, front, options, timeLimit }) => {
   options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'battle-option';
+    btn.dataset.answer = opt;
     btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${escHtml(opt)}`;
-    btn.onclick = () => submitAnswer(opt, btn, options);
+    btn.onclick = () => submitAnswer(opt, btn);
     grid.appendChild(btn);
   });
 
@@ -52,6 +56,10 @@ socket.on('question', ({ index, total, front, options, timeLimit }) => {
 socket.on('answer-result', ({ correct, correctAnswer, points, totalScore }) => {
   myScore = totalScore;
   document.getElementById('myScore').textContent = myScore;
+
+  if (!correct && selectedBtn) {
+    selectedBtn.classList.add('wrong');
+  }
 
   const result = document.getElementById('answerResult');
   document.getElementById('resultIcon').textContent = correct ? '✅' : '❌';
@@ -76,6 +84,7 @@ socket.on('time-up', ({ correctAnswer }) => {
 socket.on('leaderboard-update', ({ leaderboard }) => {
   showScreen('leaderboardScreen');
   renderLeaderboard(leaderboard, 'midLeaderboard', false);
+  renderScoresStrip(leaderboard);
 });
 
 socket.on('game-over', ({ leaderboard }) => {
@@ -84,21 +93,31 @@ socket.on('game-over', ({ leaderboard }) => {
   renderLeaderboard(leaderboard, 'finalLeaderboard', true);
 });
 
+socket.on('host-changed', ({ newHostId, newHostName }) => {
+  if (newHostId === USER_ID) {
+    showToast('You are now the host!', 'success');
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) startBtn.style.display = 'inline-flex';
+  } else {
+    showToast(`${escHtml(newHostName)} is now the host`, 'info');
+  }
+});
+
 socket.on('error', ({ message }) => {
-  alert(message);
-  window.location.href = '/battle';
+  showToast(message, 'error');
+  setTimeout(() => { window.location.href = '/battle'; }, 2500);
 });
 
 function startGame() {
   socket.emit('start-game', { code: ROOM_CODE, userId: USER_ID });
 }
 
-function submitAnswer(answer, btn, allOptions) {
+function submitAnswer(answer, btn) {
   if (hasAnswered) return;
   hasAnswered = true;
+  selectedBtn = btn;
   stopTimer();
   disableOptions();
-
   socket.emit('submit-answer', { code: ROOM_CODE, userId: USER_ID, answer, timeLeft });
 }
 
@@ -144,8 +163,7 @@ function disableOptions() {
 
 function highlightCorrect(correctAnswer) {
   document.querySelectorAll('.battle-option').forEach(btn => {
-    const text = btn.textContent.trim().replace(/^[ABCD]/, '').trim();
-    if (text === correctAnswer) btn.classList.add('correct');
+    if (btn.dataset.answer === correctAnswer) btn.classList.add('correct');
   });
 }
 
@@ -154,6 +172,8 @@ function showScreen(id) {
     const el = document.getElementById(s);
     if (el) el.style.display = s === id ? 'block' : 'none';
   });
+  const strip = document.getElementById('battleScoresStrip');
+  if (strip) strip.style.display = id === 'gameScreen' ? 'flex' : 'none';
 }
 
 function renderPlayers(players) {
@@ -170,6 +190,21 @@ function renderPlayers(players) {
     `;
     grid.appendChild(div);
   });
+}
+
+function renderScoresStrip(players) {
+  const strip = document.getElementById('battleScoresStrip');
+  if (!strip) return;
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  strip.innerHTML = sorted.map(p => `
+    <div class="score-chip${p.userId === USER_ID ? ' score-chip-me' : ''}">
+      <div class="score-chip-avatar" style="background:${p.avatarColor}">${p.username.charAt(0).toUpperCase()}</div>
+      <div class="score-chip-info">
+        <span class="score-chip-name">${escHtml(p.username)}</span>
+        <span class="score-chip-score">${p.score}</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderLeaderboard(leaderboard, containerId, isFinal) {

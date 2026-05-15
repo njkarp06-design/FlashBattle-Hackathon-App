@@ -103,11 +103,14 @@ function checkTypedAnswer() {
 
   const isCorrect = typed.toLowerCase() === correctAnswer.toLowerCase();
 
-  const card = cards[current];
-  if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
-  if (isCorrect) correct++; else wrong++;
-  document.getElementById('correctCount').textContent = correct;
-  document.getElementById('wrongCount').textContent = wrong;
+  if (!markedCards.has(current)) {
+    markedCards.add(current);
+    const card = cards[current];
+    if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
+    if (isCorrect) correct++; else wrong++;
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('wrongCount').textContent = wrong;
+  }
 
   const fb = document.getElementById('typingFeedback');
   fb.style.display = 'block';

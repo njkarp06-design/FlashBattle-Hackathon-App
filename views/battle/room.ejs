@@ -102,7 +102,7 @@
 <script>
   const ROOM_CODE = '<%= room.code %>';
   const USER_ID = '<%= user._id %>';
-  const USERNAME = '<%= user.username %>';
+  const USERNAME = <%- JSON.stringify(user.username).replace(/</g, '\\u003c') %>;
   const AVATAR_COLOR = '<%= user.avatarColor %>';
   const IS_HOST = <%= isHost %>;
 </script>

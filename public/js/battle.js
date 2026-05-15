@@ -35,8 +35,13 @@ socket.on('question', ({ index, total, front, options, timeLimit }) => {
   hasAnswered = false;
   selectedBtn = null;
   document.getElementById('questionCounter').textContent = `Question ${index + 1} of ${total}`;
-  document.getElementById('questionText').textContent = front;
   document.getElementById('answerResult').style.display = 'none';
+
+  const qEl = document.getElementById('questionText');
+  qEl.textContent = front;
+  qEl.classList.remove('q-enter');
+  void qEl.offsetWidth;
+  qEl.classList.add('q-enter');
 
   const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
@@ -44,6 +49,7 @@ socket.on('question', ({ index, total, front, options, timeLimit }) => {
   options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'battle-option';
+    btn.style.animationDelay = `${i * 55}ms`;
     btn.dataset.answer = opt;
     btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${escHtml(opt)}`;
     btn.onclick = () => submitAnswer(opt, btn);
@@ -57,7 +63,12 @@ socket.on('answer-result', ({ correct, correctAnswer, points, totalScore }) => {
   myScore = totalScore;
   document.getElementById('myScore').textContent = myScore;
 
-  if (!correct && selectedBtn) {
+  if (correct && selectedBtn) {
+    selectedBtn.classList.remove('selected');
+    selectedBtn.classList.add('correct');
+    if (points > 0) spawnScorePop(selectedBtn, `+${points}`);
+  } else if (!correct && selectedBtn) {
+    selectedBtn.classList.remove('selected');
     selectedBtn.classList.add('wrong');
   }
 
@@ -67,6 +78,17 @@ socket.on('answer-result', ({ correct, correctAnswer, points, totalScore }) => {
   document.getElementById('resultPts').textContent = points > 0 ? `+${points} pts` : 'No points';
   result.style.display = 'block';
 });
+
+function spawnScorePop(anchorEl, text) {
+  const rect = anchorEl.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'score-pop';
+  pop.textContent = text;
+  pop.style.left = (rect.left + rect.width / 2) + 'px';
+  pop.style.top = rect.top + 'px';
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 950);
+}
 
 socket.on('time-up', ({ correctAnswer }) => {
   stopTimer();
@@ -116,6 +138,7 @@ function submitAnswer(answer, btn) {
   if (hasAnswered) return;
   hasAnswered = true;
   selectedBtn = btn;
+  btn.classList.add('selected');
   stopTimer();
   disableOptions();
   socket.emit('submit-answer', { code: ROOM_CODE, userId: USER_ID, answer, timeLeft });
@@ -141,15 +164,20 @@ function startTimer(seconds) {
 
 function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const wrap = document.querySelector('.battle-timer-wrap');
+  if (wrap) wrap.classList.remove('urgent');
 }
 
 function updateTimer(val) {
   const el = document.getElementById('battleTimer');
   const circle = document.getElementById('timerCircle');
+  const wrap = document.querySelector('.battle-timer-wrap');
   if (!el || !circle) return;
 
   el.textContent = val;
   el.style.color = val <= 5 ? 'var(--danger)' : val <= 10 ? 'var(--warning)' : 'var(--text)';
+
+  if (wrap) wrap.classList.toggle('urgent', val <= 5 && val > 0);
 
   const pct = val / 15;
   const circumference = 94.2;
@@ -196,15 +224,21 @@ function renderScoresStrip(players) {
   const strip = document.getElementById('battleScoresStrip');
   if (!strip) return;
   const sorted = [...players].sort((a, b) => b.score - a.score);
-  strip.innerHTML = sorted.map(p => `
+  const rankClasses = ['rank-first', 'rank-second', 'rank-third'];
+  const rankLabels = ['#1', '#2', '#3'];
+  strip.innerHTML = sorted.map((p, i) => {
+    const rankClass = i < 3 ? rankClasses[i] : '';
+    const rankLabel = i < 3 ? rankLabels[i] : `#${i + 1}`;
+    return `
     <div class="score-chip${p.userId === USER_ID ? ' score-chip-me' : ''}">
       <div class="score-chip-avatar" style="background:${p.avatarColor}">${p.username.charAt(0).toUpperCase()}</div>
       <div class="score-chip-info">
+        <span class="score-chip-rank ${rankClass}">${rankLabel}</span>
         <span class="score-chip-name">${escHtml(p.username)}</span>
         <span class="score-chip-score">${p.score}</span>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderLeaderboard(leaderboard, containerId, isFinal) {

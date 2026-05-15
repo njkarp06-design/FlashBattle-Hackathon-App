@@ -8,6 +8,7 @@ let studyMode = 'flip'; // 'flip' or 'type'
 let typingAnswered = false;
 let cardResults = []; // {cardId, correct}
 let markedCards = new Set(); // tracks indices already marked to prevent double-counting
+let dotResults = {}; // index -> true/false, for coloring dots after answer
 
 function setMode(mode) {
   studyMode = mode;
@@ -105,11 +106,13 @@ function checkTypedAnswer() {
 
   if (!markedCards.has(current)) {
     markedCards.add(current);
+    dotResults[current] = isCorrect;
     const card = cards[current];
     if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
     if (isCorrect) correct++; else wrong++;
     document.getElementById('correctCount').textContent = correct;
     document.getElementById('wrongCount').textContent = wrong;
+    updateDots(current);
   }
 
   const fb = document.getElementById('typingFeedback');
@@ -120,6 +123,7 @@ function checkTypedAnswer() {
   } else {
     fb.className = 'typing-feedback wrong';
     fb.textContent = `✗ Answer: ${correctAnswer}`;
+    shakeInput();
   }
 
   document.getElementById('nextBtn').disabled = false;
@@ -142,16 +146,37 @@ function flipCard() {
   document.getElementById('nextBtn').disabled = false;
 }
 
+function flashFeedback(isCorrect) {
+  const inner = document.getElementById('flashcardInner');
+  if (!inner) return;
+  inner.classList.remove('flash-correct', 'flash-wrong');
+  void inner.offsetWidth;
+  inner.classList.add(isCorrect ? 'flash-correct' : 'flash-wrong');
+  setTimeout(() => inner.classList.remove('flash-correct', 'flash-wrong'), 600);
+}
+
+function shakeInput() {
+  const input = document.getElementById('typeAnswer');
+  if (!input) return;
+  input.classList.remove('shake');
+  void input.offsetWidth;
+  input.classList.add('shake');
+  setTimeout(() => input.classList.remove('shake'), 500);
+}
+
 function markAnswer(isCorrect) {
   if (!markedCards.has(current)) {
     markedCards.add(current);
+    dotResults[current] = isCorrect;
     const card = cards[current];
     if (card && card._id) cardResults.push({ cardId: card._id, correct: isCorrect });
     if (isCorrect) correct++; else wrong++;
     document.getElementById('correctCount').textContent = correct;
     document.getElementById('wrongCount').textContent = wrong;
+    updateDots(current);
   }
-  showCard(current + 1);
+  flashFeedback(isCorrect);
+  setTimeout(() => showCard(current + 1), 350);
 }
 
 function prevCard() {
@@ -180,12 +205,15 @@ function renderDots() {
 function updateDots(index) {
   const dots = document.querySelectorAll('#studyDots div');
   dots.forEach((d, i) => {
-    if (i < index) {
-      d.style.background = 'var(--primary)';
-      d.style.transform = 'scale(1)';
-    } else if (i === index) {
+    if (i === index) {
       d.style.background = 'var(--accent)';
       d.style.transform = 'scale(1.4)';
+    } else if (i in dotResults) {
+      d.style.background = dotResults[i] ? 'var(--success)' : 'var(--danger)';
+      d.style.transform = 'scale(1)';
+    } else if (i < index) {
+      d.style.background = 'var(--primary)';
+      d.style.transform = 'scale(1)';
     } else {
       d.style.background = 'var(--border)';
       d.style.transform = 'scale(1)';
@@ -203,9 +231,27 @@ async function showComplete() {
   const xpEarned = total * 5 + correct * 10;
   const duration = Math.round((Date.now() - startTime) / 1000);
 
+  const iconEl = document.getElementById('completeIcon');
+  const titleEl = document.getElementById('completeTitle');
+  if (acc >= 90) {
+    if (iconEl) iconEl.textContent = '🌟';
+    if (titleEl) titleEl.textContent = 'Outstanding!';
+  } else if (acc >= 70) {
+    if (iconEl) iconEl.textContent = '🎉';
+    if (titleEl) titleEl.textContent = 'Session Complete!';
+  } else if (acc >= 50) {
+    if (iconEl) iconEl.textContent = '💪';
+    if (titleEl) titleEl.textContent = 'Keep It Up!';
+  } else {
+    if (iconEl) iconEl.textContent = '📚';
+    if (titleEl) titleEl.textContent = 'Practice Makes Perfect!';
+  }
+
   document.getElementById('finalCorrect').textContent = correct;
   document.getElementById('finalWrong').textContent = wrong;
-  document.getElementById('finalAcc').textContent = acc + '%';
+  const accEl = document.getElementById('finalAcc');
+  accEl.textContent = acc + '%';
+  accEl.style.color = acc >= 80 ? 'var(--success)' : acc >= 60 ? 'var(--warning)' : 'var(--danger)';
   document.getElementById('finalXp').textContent = '+' + xpEarned + ' XP';
 
   try {
@@ -239,12 +285,13 @@ async function showComplete() {
 }
 
 function restartStudy() {
-  correct = 0; wrong = 0; startTime = Date.now(); cardResults = []; markedCards = new Set();
+  correct = 0; wrong = 0; startTime = Date.now(); cardResults = []; markedCards = new Set(); dotResults = {};
   document.getElementById('correctCount').textContent = 0;
   document.getElementById('wrongCount').textContent = 0;
   document.getElementById('studyArea').style.display = 'flex';
   document.getElementById('studyComplete').style.display = 'none';
   cards = shuffle(cards);
+  renderDots();
   showCard(0);
 }
 
